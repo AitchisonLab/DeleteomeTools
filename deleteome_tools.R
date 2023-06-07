@@ -52,7 +52,7 @@ getProfileForDeletion <- function(delData, deletionname, Mthresh, pthresh, conso
 }
 
 # Get names of all mutant strains in Deleteome data
-getAllConditionNames <- function(deleteomeData){
+getAllStrainNames <- function(deleteomeData){
   
   # This excludes strains in deleteome that start with "WT_" ("WT-MATA"    "WT-BY4743"  "WT-YPD"). 
   # From https://deleteome.holstegelab.nl/: "These In addition, three control experiments, matA versus matAlpha, 
@@ -61,7 +61,7 @@ getAllConditionNames <- function(deleteomeData){
   colheads <- gsub("_del","",colheads)
   colheads <- colheads[ ! colheads %in% c("systematicName","geneSymbol")] # exclude systematicName and geneSymbol columns
   
-  return(unique(colheads))
+  return(sort(unique(colheads)))
 }
 
 # Get genomic locations for genes
@@ -216,7 +216,7 @@ genomicRegionEnrichment <- function(genePositions=NULL, systematicNamesBG, syste
   
   hyperp = phyper(samplesuccesses-1, popsuccesses, (popsize-popsuccesses), samplesize, lower.tail=F) # the minus 1 is because probabilities are P[X>x] by default but we want P[X>=x]
   
-  message(c("Population size: ", popsize, " Population successes: ", popsuccesses, " Sample size: ", samplesize, " Sample successes: ", samplesuccesses))
+  message(c("\nPopulation size: ", popsize, " Population successes: ", popsuccesses, " Sample size: ", samplesize, " Sample successes: ", samplesuccesses))
 
   return(hyperp)
 }
@@ -227,7 +227,7 @@ genomicRegionEnrichment <- function(genePositions=NULL, systematicNamesBG, syste
 # Performs enrichment test over GO:BP, GO:MF and GO:CC sub-ontologies
 doGOenrichmentOnDeleteomeMatches <- function(deleteomeData, genes=c(), useDeleteomeBackground=T, pthresh=0.05){ # uses gene names not systematic names
   
-  require(clusterProfiler)
+  suppressMessages(suppressWarnings(require(clusterProfiler)))
   require(org.Sc.sgd.db)
   
   genes <- toupper(genes)
@@ -235,7 +235,7 @@ doGOenrichmentOnDeleteomeMatches <- function(deleteomeData, genes=c(), useDelete
   message("Performing GO enrichment tests")
   
   if(useDeleteomeBackground){
-    bg <- toupper(getAllConditionNames(deleteomeData))
+    bg <- toupper(getAllStrainNames(deleteomeData))
     xGOUni <- enrichGO(genes, pvalueCutoff = pthresh, minGSSize = 2, OrgDb=org.Sc.sgd.db::org.Sc.sgd.db, keyType = "GENENAME", pAdjustMethod = "BH", universe = bg, ont="ALL")
   }
   else{
@@ -257,8 +257,8 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA, mutantProfile=NA,
                                         specificMutantsOnly=F, 
                                         colFontSize=1,
                                         rowFontSize=0.275,
-                                        imagewidth=4000,
-                                        imageheight=3000,
+                                        imagewidth=3000,
+                                        imageheight=2400,
                                         printToFile=T){
   # make heatmap comparing all significantly matched mutants to mutant of interest
   
@@ -267,11 +267,14 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA, mutantProfile=NA,
   genesThatCanBeCompared <- mutantProfile[ ! mutantProfile$geneSymbol %in% toupper(selectedConditions),]
   
   subtelosuffix <- ""
+  rowtitleprefix <- "Genes"
+  
   if(subteloGenesOnly){
     subtelosuffix <- "\n Subtelomeric genes only"
     gps <- getGenePositions()
     subgps <- gps[gps$dist_from_telo<25000,"Geneid"]
     genesThatCanBeCompared <- genesThatCanBeCompared[genesThatCanBeCompared$systematicName %in% subgps,]
+    rowtitleprefix <- "Subtelomeric genes"
   }
   
   genesThatCanBeCompared <- genesThatCanBeCompared$geneSymbol
@@ -290,30 +293,43 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA, mutantProfile=NA,
   
   mybreaks <- seq(-1.5, 1.5, length.out=101)
   
-  dev.new(width=8,height=8,noRStudioGD = TRUE)
+  if(printToFile){
+    hmfile <- paste0(thedir, "/output/Heatmaps/",mutantname,"_",fileprefix,"Heatmap_l2FC_",MthreshForTitle,"_p",
+                      pthreshForTitle,".jpg")
+    jpeg(file = hmfile, 
+            width=imagewidth, height = imageheight, res=300, units="px")
+  }
+  else{
+    dev.new(width=10,height=8,noRStudioGD = TRUE)
+  }
+  
   par(cex.main=0.75) ## this will affect also legend title font size
   
-  clust <- heatmap.2(mybigmat,Colv=T,trace="none", symbreaks=T,
+  clust <- heatmap.2(mybigmat,Colv=T, trace="none", symbreaks=T, 
+                     xlab = "Mutant strain", ylab = paste0(rowtitleprefix, " in ", mutantname, " deletion signature"),
+                     labRow = rep("",dim(mybigmat)[1]),
                      symm=F,symkey=F, 
                      scale="none", 
                      breaks=mybreaks, 
-                     margins=c(6,6), 
+                     margins=c(6,2), # Makes sure the y-axis label is more flush with plot
                      cexCol=colFontSize, 
                      cexRow=rowFontSize,
                      col = colorRampPalette(c("blue","white","red"))(100), 
-                     key.title=NA, 
-                     main=paste0("Gene expression for ",mutantname," signature and matched\ndeleteome mutants based on ",titledesc,"\nlog2 cutoff: ",
-                                 MthreshForTitle, ", p-value cutoff: ", pthreshForTitle, subtelosuffix))
+                     key.title= "",
+                     keysize = 1,
+                     key.xlab = "Log2 fold-change vs. WT",
+                     main=paste0("Expression for ", mutantname, 
+                                 " deletion and other deleteome strains\nbased on ", titledesc, "\nLog2 fold-change cutoff: ",
+                                            MthreshForTitle, ", P-value cutoff: ", pthreshForTitle, subtelosuffix))
   
-  if(printToFile){
-    hmtitle <- paste0(thedir, "/output/Heatmaps/",mutantname,"_",fileprefix,"Heatmap_l2FC_",MthreshForTitle,"_p",
-                      pthreshForTitle,".jpg")
-    message("Printing heatmap to ", hmtitle)
-    dev.print(jpeg, file = hmtitle, 
-            width=imagewidth, height = imageheight,res=300)
+  if(printToFile){ 
+    dev.off()
+    message("Printed heatmap to ", hmfile)
   }
+  
   return(mybigmat)
 }
+
 
 # Mountain lake plots
 makeGenomicPositionHistogram <- function(alldata=NULL, 
@@ -342,8 +358,8 @@ makeGenomicPositionHistogram <- function(alldata=NULL,
   }
   
   if(is.null(genePositions)){
-    message("Loading gene positions across deleteome")
-    genePositions <- getGenePositions()
+    message("Loading gene positions across deleteome. Excluding mitochondrial genes.")
+    genePositions <- getGenePositions(includeMito = F)
   }
   
   if(relativeTo=="telomere"){
@@ -382,9 +398,15 @@ makeGenomicPositionHistogram <- function(alldata=NULL,
   
   
   
-  regionUPhyperp <- genomicRegionEnrichment(genePositions, systematicNamesBG=profileAll$systematicName, systematicNames=profileUP$systematicName, relativeTo = relativeTo, rangeInKB = rangeInKB)
+  regionUPhyperp <- genomicRegionEnrichment(genePositions, 
+                                            systematicNamesBG=profileAll[profileAll$systematicName %in% genePositions$Geneid, "systematicName"], 
+                                            systematicNames=profileUP[profileUP$systematicName %in% genePositions$Geneid, "systematicName"], 
+                                            relativeTo = relativeTo, rangeInKB = rangeInKB)
   message("Hypergeometric test for upregulated subtelomeric genes: ", regionUPhyperp)
-  regionDOWNhyperp <- genomicRegionEnrichment(genePositions, systematicNamesBG=profileAll$systematicName, systematicNames=profileDOWN$systematicName, relativeTo = relativeTo, rangeInKB = rangeInKB)
+  
+  regionDOWNhyperp <- genomicRegionEnrichment(genePositions, systematicNamesBG=profileAll[profileAll$systematicName %in% genePositions$Geneid, "systematicName"], 
+                                              systematicNames=profileDOWN[profileDOWN$systematicName %in% genePositions$Geneid, "systematicName"],
+                                              relativeTo = relativeTo, rangeInKB = rangeInKB)
   message("Hypergeometric test for downregulated subtelomeric genes: ", regionDOWNhyperp)
   
   # ggplot2 style
@@ -397,10 +419,10 @@ makeGenomicPositionHistogram <- function(alldata=NULL,
   names(allDFgg) <- "dist"
   
   p <- ggplot() +
-    geom_histogram(data = allDFgg, aes(x = dist, y = ..count../3), fill="gray", binwidth = 5, boundary=-5) + 
-    geom_histogram(data = allDFgg, aes(x = dist, y = -..count../3), fill="gray", binwidth = 5, boundary=-5) + 
-    geom_histogram(data = upDFgg, aes(x = dist, y = ..count..), fill=upcolor, binwidth = 5, boundary=-5) +
-    geom_histogram(data = downDFgg, aes(x = dist, y = -..count..), fill= downcolor, binwidth = 5, boundary=-5) +
+    geom_histogram(data = allDFgg, aes(x = dist, y = after_stat(count)/3), fill="gray", binwidth = 5, boundary=-5) + 
+    geom_histogram(data = allDFgg, aes(x = dist, y = -after_stat(count)/3), fill="gray", binwidth = 5, boundary=-5) + 
+    geom_histogram(data = upDFgg, aes(x = dist, y = after_stat(count)), fill=upcolor, binwidth = 5, boundary=-5) +
+    geom_histogram(data = downDFgg, aes(x = dist, y = -after_stat(count)), fill= downcolor, binwidth = 5, boundary=-5) +
     scale_x_continuous(breaks=seq(0,xmax,by=25)) +
     theme(plot.title = element_text(size=25, face="bold"), axis.text=element_text(size=11),
            axis.title=element_text(size = 18,face="plain"), axis.text.x = element_text(angle = 45, hjust=1)) +
@@ -440,7 +462,7 @@ getDeleteomeMatchesByReciprocalCorrelation = function(mutant=NA, minAbsLog2FC=0,
     alldata <- getCachedDeleteomeAll()
   }
   
-  conds <- getAllConditionNames(alldata)
+  conds <- getAllStrainNames(alldata)
   
   if( ! mutant %in% conds){
     stop(paste0(mutant, " is not in deleteome"))
@@ -462,7 +484,7 @@ getDeleteomeMatchesByReciprocalCorrelation = function(mutant=NA, minAbsLog2FC=0,
   
   h = 1
   
-  conditions <- getAllConditionNames(alldata)
+  conditions <- getAllStrainNames(alldata)
   
   for(cond in conditions){
     
@@ -586,7 +608,7 @@ getDeleteomeMatchesByEnrichment <- function(mutant=NA,
                         sampleSize=as.numeric(), sampleSuccesses=as.numeric(), popSize=as.numeric(), 
                         popSuccesses=as.numeric(), stringsAsFactors = F)
   
-  conds <- getAllConditionNames(alldata)
+  conds <- getAllStrainNames(alldata)
   
   if( ! mutant %in% conds){
     stop(paste0(mutant, " is not in deleteome"))

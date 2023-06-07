@@ -5,11 +5,12 @@ setwd(scriptloc)
 source(paste0(scriptloc, "/deleteome_tools.R")) # Assumes that deleteome_tools.R is in same directory as this file
 
 alldata <- getDeleteomeExpData() # Load all the deleteome expression data
+# getAllStrainNames(alldata) # Use this function to output a list of all available mutant strains in the Deleteome
+
+mutantname <- "nup170" # The tool will find mutant strains transcriptionally similar to the strain specified here
 
 Mthresh <- 0 # log2 fold-change cutoff
 pthresh <- 0.05 # p-value cutoff
-
-mutantname <- "nup170"
 
 selectedConditions <- getDeleteomeMatchesByEnrichment(
                         mutant=mutantname, 
@@ -18,6 +19,7 @@ selectedConditions <- getDeleteomeMatchesByEnrichment(
                         deleteomeData = alldata)
 
 # Show correlated mutants
+message("\nSimilar mutant strains:")
 print(selectedConditions)
 
 mutantProfile <- getProfileForDeletion(alldata, mutantname, Mthresh, pthresh)
@@ -27,7 +29,7 @@ hm1 <- makeHeatmapDeleteomeMatches(mutantname=mutantname,
                                    mutantProfile, 
                                    selectedConditions, 
                                    fileprefix = "sigHypergMutants", 
-                                   titledesc="hypergeometric analysis", 
+                                   titledesc="transcriptional similarity (hypergeometric analysis)", 
                                    MthreshForTitle = Mthresh, 
                                    pthreshForTitle = pthresh, 
                                    rowFontSize = 0.3, 
@@ -37,29 +39,38 @@ hm1 <- makeHeatmapDeleteomeMatches(mutantname=mutantname,
 hm2 <- makeHeatmapDeleteomeMatches(mutantname=mutantname, 
                                    mutantProfile, 
                                    selectedConditions, 
-                                   fileprefix = "sigCorrHypergSubtelo", 
-                                   titledesc="hypergeometric analysis", 
+                                   fileprefix = "sigHypergSubtelo", 
+                                   titledesc="transcriptional similarity (hypergeometric analysis)", 
                                    MthreshForTitle = Mthresh, 
                                    pthreshForTitle = pthresh, 
                                    subteloGenesOnly = T, 
                                    printToFile = T, 
                                    rowFontSize=0.275)
 
-# Mountain lake plot
+# Generate heatmap using specific deleteome profiles
+hm3 <- makeHeatmapDeleteomeMatches(mutantname=mutantname, mutantProfile, 
+                                   c("hmo1","rif1","sir4","ctf8","ctf18","dcc1"), 
+                                   fileprefix = "specificMutants", 
+                                   titledesc="manual selection", 
+                                   MthreshForTitle = Mthresh, 
+                                   pthreshForTitle = pthresh, 
+                                   imagewidth = 2000,
+                                   printToFile = T)
+
+
+# Make a mountain lake plot (this also reports subtelomeric enrichment p-values for the mutant's up- and down-regulated genes)
 makeGenomicPositionHistogram(alldata = alldata, 
                              mutant = mutantname, 
                              Mthresh = Mthresh, 
+                             xmax=770, ymax = 40, 
                              upcolor="#d53e4f", 
                              downcolor="#3288bd")
 
-# Do GO enrichment on deleteome matches
+# Run GO enrichment on similar mutants
 GOpadjcutoff = 0.05
 GO <- doGOenrichmentOnDeleteomeMatches(alldata, 
                                        selectedConditions, 
                                        pthresh = GOpadjcutoff)
 GOoutputfile <- paste0(scriptloc,"/output/GO_enrichment/",mutantname,"GOenrichmentResults_HyperGguilt_GOpadj",GOpadjcutoff,".tsv")
-write.table(GO,file=GOoutputfile, 
-            sep="\t", quote = F, row.names = F)
+write.table(GO,file=GOoutputfile, sep="\t", quote = F, row.names = F)
 message("Wrote GO enrichment results to ", GOoutputfile)
-
-

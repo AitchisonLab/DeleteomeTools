@@ -5,11 +5,12 @@ setwd(scriptloc)
 source(paste0(scriptloc, "/deleteome_tools.R")) # Assumes that deleteome_tools.R is in same directory as this file
 
 alldata <- getDeleteomeExpData() # Load all the deleteome expression data
+# getAllStrainNames(alldata) # Use this function to output a list of all available mutant strains in the Deleteome
+
+mutantname <- "nup170" # The tool will find similar mutant strains to the strain specified here
 
 Mthresh <- 0 # log2 fold-change cutoff
 pthresh <- 0.05 # p-value cutoff
-
-mutantname <- "nup170"
 
 selectedConditions <- getDeleteomeMatchesByReciprocalCorrelation(mutant=mutantname, 
                                                                  minAbsLog2FC = Mthresh, 
@@ -17,6 +18,7 @@ selectedConditions <- getDeleteomeMatchesByReciprocalCorrelation(mutant=mutantna
                                                                  deleteomeData = alldata)
 
 # Show correlated mutants
+message("\nSimilar mutant strains:")
 print(selectedConditions)
 
 # Generate heatmap for significantly correlated deleteome mutants
@@ -31,9 +33,9 @@ hm1 <- makeHeatmapDeleteomeMatches(mutantname=mutantname,
                                    mutantProfile, 
                                    selectedConditions, 
                                    fileprefix = "sigCorrMutants", 
-                                   titledesc="reciprocal correlation", 
+                                   titledesc="transcriptional similarity (reciprocal correlation)", 
                                    MthreshForTitle = Mthresh, 
-                                   pthreshForTitle = pthresh, 
+                                   pthreshForTitle = pthresh,
                                    printToFile = T)
 
 # Generate heatmap using subtelomic genes only
@@ -41,7 +43,7 @@ hm2 <- makeHeatmapDeleteomeMatches(mutantname=mutantname,
                                    mutantProfile, 
                                    selectedConditions, 
                                    fileprefix = "sigCorrMutantsSubtelo", 
-                                   titledesc="reciprocal correlation (only subtelo genes shown)",
+                                   titledesc="transcriptional similarity (reciprocal correlation)", 
                                    MthreshForTitle = Mthresh, 
                                    pthreshForTitle = pthresh, 
                                    subteloGenesOnly = T, 
@@ -52,19 +54,20 @@ hm2 <- makeHeatmapDeleteomeMatches(mutantname=mutantname,
 hm3 <- makeHeatmapDeleteomeMatches(mutantname=mutantname, mutantProfile, 
                                    c("hmo1","rif1","sir4","ctf8","ctf18","dcc1"), 
                                    fileprefix = "specificMutants", 
-                                   titledesc="specific deleteome profiles", 
-                                   MthreshForTitle = Mthresh, pthreshForTitle = pthresh,
+                                   titledesc="manual selection", 
+                                   MthreshForTitle = Mthresh, 
+                                   pthreshForTitle = pthresh, 
+                                   imagewidth = 2000,
                                    printToFile = T)
 
-# Make a mountain lake plot (this also reports subtelomeric enrichment p-values for the mutant's up- 
-# and down-regulated genes)
+
+# Make a mountain lake plot (this also reports subtelomeric enrichment p-values for the mutant's up- and down-regulated genes)
 makeGenomicPositionHistogram(alldata = alldata, 
                              mutant = mutantname, 
                              Mthresh = Mthresh, 
                              xmax=770, ymax = 40, 
                              upcolor="#d53e4f", 
-                             downcolor="#3288bd", 
-                             showupdownlabels = T)
+                             downcolor="#3288bd")
 
 
 # Run GO enrichment on similar mutants
