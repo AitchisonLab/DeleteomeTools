@@ -2,7 +2,7 @@
 
 R code for identifying similarities in single-gene yeast deletion strains within the Deleteome transcriptomic compendium.
 
-The Deleteome compendium is described in 
+The Deleteome compendium, a collection of ~1,500 transcriptomes from single-gene deletion yeast strains, is described in 
 
 [Kemmeren P, et al. Large-scale genetic perturbations reveal regulatory networks and an abundance of gene-specific repressors. Cell. 2014 Apr 24;157(3):740-52.](https://pubmed.ncbi.nlm.nih.gov/24766815/)
 
@@ -12,11 +12,11 @@ This work is described in
 
 [Kumar, et al. Nuclear pore complexes mediate subtelomeric gene silencing by regulating PCNA levels on chromatin. Journal of Cell Biology. (in press)](https://doi.org/10.1083/jcb.202207060)
 
-Our software offers two methods for assessing similarity between transcriptomic profiles. The first quantifies similarity by conducting correlation tests on log2 fold-change values of profiles. The second method employs hypergeometric tests to determine if the set of significantly altered genes shared among transcriptomic profiles occurs more frequently than expected by chance. 
+Our software offers two methods for assessing similarity between transcriptomic profiles. The first quantifies similarity by conducting correlation tests on log2 fold-change values of transcriptomic profiles. The second method employs hypergeometric tests to determine if the set of significantly altered genes shared among transcriptomic profiles occurs more frequently than expected by chance. 
 
 The first approach considers the magnitude of expression changes in transcriptional profiles, while the second approach focuses on whether a gene is differentially expressed or not, based on user-defined thresholds. 
 
-In our study with NUP170, we have observed that both approaches yield similar results. However, the correlation-based method tends to be the more conservative option.
+In our study with NUP170, we have observed that both approaches yield similar results. The correlation-based method tends to be the more conservative option.
 
 ## Getting started
 
