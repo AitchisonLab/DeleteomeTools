@@ -39,3 +39,9 @@ alldata <- getDeleteomeExpData() # Loads Deleteome data
 getAllStrainNames(alldata) # Prints the gene deleted for each Deleteome strain
 ```
 
+## Dependencies
+Users will need to have the following R packages installed to run the example scripts:
+* [org.Sc.sgd.db](https://bioconductor.org/packages/release/data/annotation/html/org.Sc.sgd.db.html)
+* [gplots](https://www.rdocumentation.org/packages/gplots/versions/3.1.3)
+* [ggplot2](https://ggplot2.tidyverse.org)
+* [clusterProfiler](https://bioconductor.org/packages/release/bioc/html/clusterProfiler.html)
