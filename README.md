@@ -10,7 +10,7 @@ Our software was originally developed to identify gene products that are functio
 We used the software to identify genes that, when deleted, alter the yeast transcriptome in a way that is similar to the alterations caused by a NUP170 deletion.
 This work is described in 
 
-[Kumar, et al. Nuclear pore complexes mediate subtelomeric gene silencing by regulating PCNA levels on chromatin. Journal of Cell Biology. 2023 (in press)](https://doi.org/10.1083/jcb.202207060)
+[Kumar, et al. Nuclear pore complexes mediate subtelomeric gene silencing by regulating PCNA levels on chromatin. Journal of Cell Biology. (in press)](https://doi.org/10.1083/jcb.202207060)
 
 Our software offers two methods for assessing similarity between transcriptomic profiles. The first quantifies similarity by conducting correlation tests on log2 fold-change values of transcriptomic profiles. The second method employs hypergeometric tests to determine if the set of significantly altered genes shared among transcriptomic profiles occurs more frequently than expected by chance. 
 
