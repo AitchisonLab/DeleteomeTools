@@ -1,6 +1,6 @@
 # Deleteome-Tools
 
-A set of R tools for identifying similarities in single-gene yeast deletion strains within the Deleteome transcriptomic compendium.
+R code for identifying similarities in single-gene yeast deletion strains within the Deleteome transcriptomic compendium.
 
 The Deleteome compendium is described in 
 
@@ -12,11 +12,11 @@ This work is described in
 
 [Kumar, et al. Nuclear pore complexes mediate subtelomeric gene silencing by regulating PCNA levels on chromatin. Journal of Cell Biology. (in press)](https://doi.org/10.1083/jcb.202207060)
 
-Our software offers two methods for assessing similarity between transcriptomic profiles. The first quantifies similarity by conducting correlation tests on log2 fold-change values of transcriptomic profiles. The second method employs hypergeometric tests to determine if the set of significantly altered genes shared among transcriptomic profiles occurs more frequently than expected by chance. 
+Our software offers two methods for assessing similarity between transcriptomic profiles. The first quantifies similarity by conducting correlation tests on log2 fold-change values of profiles. The second method employs hypergeometric tests to determine if the set of significantly altered genes shared among transcriptomic profiles occurs more frequently than expected by chance. 
 
-The first approach considers the magnitude of expression changes in transcriptional profiles, while the second approach focuses on whether a gene is differentially expressed or not, based on user-defined threshold criteria. 
+The first approach considers the magnitude of expression changes in transcriptional profiles, while the second approach focuses on whether a gene is differentially expressed or not, based on user-defined thresholds. 
 
-In our study with NUP170, we have observed that both approaches yield similar results. However, the correlation-based method tends to be a more conservative option.
+In our study with NUP170, we have observed that both approaches yield similar results. However, the correlation-based method tends to be the more conservative option.
 
 ## Getting started
 
