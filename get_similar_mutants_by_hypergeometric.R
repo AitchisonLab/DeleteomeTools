@@ -9,8 +9,8 @@ alldata <- getDeleteomeExpData() # Load all the deleteome expression data
 
 mutantname <- "nup170" # The tool will find mutant strains transcriptionally similar to the strain specified here
 
-Mthresh <- 0 # log2 fold-change cutoff
-pthresh <- 0.05 # p-value cutoff
+Mthresh <- 0 # log2 fold-change cutoff for identifying differentially-expressed genes in deletion strain
+pthresh <- 0.05 # p-value cutoff for identifying differentially-expressed genes in deletion strain
 
 selectedConditions <- getDeleteomeMatchesByEnrichment(
                         mutant=mutantname, 
