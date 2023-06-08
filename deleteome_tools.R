@@ -1,6 +1,5 @@
 library(org.Sc.sgd.db)
 library(gplots)
-library(metap)
 library(ggplot2)
 
 thedir <- getwd() # Location of this script (assumes that working directory is the folder containing this script)
