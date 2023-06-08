@@ -7,12 +7,14 @@ source(paste0(scriptloc, "/deleteome_tools.R")) # Assumes that deleteome_tools.R
 alldata <- getDeleteomeExpData() # Load all the deleteome expression data
 # getAllStrainNames(alldata) # Use this function to output a list of all available mutant strains in the Deleteome
 
-mutantname <- "nup170" # The tool will find similar mutant strains to the strain specified here
+mutantname <- "nup170" # The tool will find mutant strains transcriptionally similar to the strain specified here
 
 Mthresh <- 0 # log2 fold-change cutoff for identifying differentially-expressed genes in deletion strain
 pthresh <- 0.05 # p-value cutoff for identifying differentially-expressed genes in deletion strain
 
-selectedConditions <- getDeleteomeMatchesByReciprocalCorrelation(mutant=mutantname, 
+# Find similar strains in Deleteome
+selectedConditions <- getDeleteomeMatchesByReciprocalCorrelation(
+                                                                 mutant=mutantname, 
                                                                  minAbsLog2FC = Mthresh, 
                                                                  pCutoff = pthresh, 
                                                                  deleteomeData = alldata)
@@ -29,6 +31,7 @@ mutantProfile <- getProfileForDeletion(delData = alldata,
                                        Mthresh = Mthresh, 
                                        pthresh = pthresh)
 
+# Generate heatmap for significantly similar deleteome profiles
 hm1 <- makeHeatmapDeleteomeMatches(mutantname=mutantname, 
                                    mutantProfile, 
                                    selectedConditions, 
@@ -38,7 +41,7 @@ hm1 <- makeHeatmapDeleteomeMatches(mutantname=mutantname,
                                    pthreshForTitle = pthresh,
                                    printToFile = T)
 
-# Generate heatmap using subtelomic genes only
+# Generate heatmap for significantly correlated deleteome strains that only shows subtelomeric genes
 # NOTE: if there are less than 2 subtelomeric genes in the strain's signature, 
 # this will generate an error indicating insufficient rows or columns for the heatmap
 hm2 <- makeHeatmapDeleteomeMatches(mutantname=mutantname, 
@@ -77,6 +80,6 @@ GOpadjcutoff = 0.05
 GO <- doGOenrichmentOnDeleteomeMatches(alldata, 
                                        selectedConditions, 
                                        pthresh = GOpadjcutoff)
-GOoutputfile <- paste0(scriptloc,"/output/GO_enrichment/", mutantname, "GO_enrichmentResults_RecipCorr_GOpadj",GOpadjcutoff,".tsv")
+GOoutputfile <- paste0(scriptloc,"/output/GO_enrichment/", mutantname, "_GOenrichmentResults_Corr_GOpadj",GOpadjcutoff,".tsv")
 write.table(GO, file=GOoutputfile, sep="\t", quote = F, row.names = F)
 message("Wrote GO enrichment results to ", GOoutputfile)
