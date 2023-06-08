@@ -36,6 +36,8 @@ hm1 <- makeHeatmapDeleteomeMatches(mutantname=mutantname,
                                    printToFile = T)
 
 # Generate heatmap for significantly correlated deleteome profiles (subtelomic genes only)
+# NOTE: if there are less than 2 subtelomeric genes in the strain's signature, 
+# this will generate an error indicating insufficient rows or columns for the heatmap
 hm2 <- makeHeatmapDeleteomeMatches(mutantname=mutantname, 
                                    mutantProfile, 
                                    selectedConditions, 

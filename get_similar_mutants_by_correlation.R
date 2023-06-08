@@ -25,7 +25,7 @@ print(selectedConditions)
 # First get a data frame that contains all the log2 fold-change and p-value info for the mutant strain 
 # (AKA its "profile")
 mutantProfile <- getProfileForDeletion(delData = alldata, 
-                                       deletionname = "nup170", 
+                                       deletionname = mutantname, 
                                        Mthresh = Mthresh, 
                                        pthresh = pthresh)
 
@@ -39,6 +39,8 @@ hm1 <- makeHeatmapDeleteomeMatches(mutantname=mutantname,
                                    printToFile = T)
 
 # Generate heatmap using subtelomic genes only
+# NOTE: if there are less than 2 subtelomeric genes in the strain's signature, 
+# this will generate an error indicating insufficient rows or columns for the heatmap
 hm2 <- makeHeatmapDeleteomeMatches(mutantname=mutantname, 
                                    mutantProfile, 
                                    selectedConditions, 
