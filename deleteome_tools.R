@@ -100,19 +100,11 @@ getGenePositions <- function(includeMito=F){
     rowNum = which(genePositions[,1] == geneid)
     
     # get chromosome containing the gene. Convert from data frame element to character array.
-    chrName = as.character(genePositions[rowNum, "Chr"])
-    cnTokens = strsplit(chrName, ";")[[1]]
-    chrName = cnTokens[1]
+    chrName = genePositions[rowNum, "Chr"]
     
     # get gene start position
-    geneStartPos = as.character(genePositions[rowNum, "Start"])
-    geneEndPos = as.character(genePositions[rowNum, "End"])
-    
-    gspTokens = strsplit(geneStartPos, ";")[[1]]
-    geneStartPos = as.integer(gspTokens[1]) 		# convert from string to integer
-    
-    gspTokens = strsplit(geneEndPos, ";")[[1]]
-    geneEndPos = as.integer(gspTokens[1]) 		# convert from string to integer
+    geneStartPos = genePositions[rowNum, "Start"]
+    geneEndPos = genePositions[rowNum, "End"]
     
     # look up chromosome length
     chrLength = chrNameLengths[which(chrNameLengths[,1] == chrName),2]
@@ -146,9 +138,7 @@ getGenePositions <- function(includeMito=F){
     
     genePositions[rowNum, dfcname] <- distFromCent
   }
-  
   return(genePositions) # Used to be na.omit(genePositions) but if include mitogenes, then dist from cent is included as NA
-  
 }
 
 # Test enrichment for differentially-expressed genes in the subtelomeric region
@@ -402,12 +392,12 @@ makeGenomicPositionHistogram <- function(alldata=NULL,
                                             systematicNamesBG=profileAll[profileAll$systematicName %in% genePositions$Geneid, "systematicName"], 
                                             systematicNames=profileUP[profileUP$systematicName %in% genePositions$Geneid, "systematicName"], 
                                             relativeTo = relativeTo, rangeInKB = rangeInKB)
-  message("Hypergeometric test for upregulated subtelomeric genes: ", regionUPhyperp)
+  message("Hypergeometric test P-value for upregulated subtelomeric genes: ", regionUPhyperp)
   
   regionDOWNhyperp <- genomicRegionEnrichment(genePositions, systematicNamesBG=profileAll[profileAll$systematicName %in% genePositions$Geneid, "systematicName"], 
                                               systematicNames=profileDOWN[profileDOWN$systematicName %in% genePositions$Geneid, "systematicName"],
                                               relativeTo = relativeTo, rangeInKB = rangeInKB)
-  message("Hypergeometric test for downregulated subtelomeric genes: ", regionDOWNhyperp)
+  message("Hypergeometric test P-value for downregulated subtelomeric genes: ", regionDOWNhyperp)
   
   # ggplot2 style
   upDFgg <- as.data.frame(upDF)
@@ -506,7 +496,7 @@ getDeleteomeMatchesByReciprocalCorrelation = function(mutant=NA, minAbsLog2FC=0,
       Rval <- NA
       pval <- NA
       # pvalFDR <- NA
-      message("Not enough overlap in signatures")
+      message("Not enough overlap in signatures for ", cond)
     }
     allCorrResults[h,] <- c(cond, Rval, pval)
     h = h+1
