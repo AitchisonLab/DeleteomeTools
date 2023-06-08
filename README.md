@@ -16,7 +16,7 @@ Our software offers two methods for assessing similarity between transcriptomic 
 
 The first approach considers the magnitude of expression changes in transcriptional profiles, while the second approach focuses on whether a gene is differentially expressed or not, based on user-defined threshold criteria. 
 
-In our study with NUP170, we have observed that both approaches yield similar results. However, the correlation-based method appears to be a more conservative option.
+In our study with NUP170, we have observed that both approaches yield similar results. However, the correlation-based method tends to be a more conservative option.
 
 ## Getting started
 
