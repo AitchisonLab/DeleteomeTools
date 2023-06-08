@@ -10,13 +10,13 @@ Our software was originally developed to identify gene products that are functio
 We used the software to identify genes that, when deleted, alter the yeast transcriptome in a way that is similar to the alterations caused by a NUP170 deletion.
 This work is described in 
 
-[Kumar, et al. Nuclear pore complexes mediate subtelomeric gene silencing by regulating PCNA levels on chromatin. Journal of Cell Biology. 2023 (in press)](https://doi.org/10.1083/jcb.202207060)
+[Kumar, et al. Nuclear pore complexes mediate subtelomeric gene silencing by regulating PCNA levels on chromatin. Journal of Cell Biology. (in press)](https://doi.org/10.1083/jcb.202207060)
 
 Our software offers two methods for assessing similarity between transcriptomic profiles. The first quantifies similarity by conducting correlation tests on log2 fold-change values of transcriptomic profiles. The second method employs hypergeometric tests to determine if the set of significantly altered genes shared among transcriptomic profiles occurs more frequently than expected by chance. 
 
 The first approach considers the magnitude of expression changes in transcriptional profiles, while the second approach focuses on whether a gene is differentially expressed or not, based on user-defined threshold criteria. 
 
-In our study with NUP170, we have observed that both approaches yield similar results. However, the correlation-based method appears to be a more conservative option.
+In our study with NUP170, we have observed that both approaches yield similar results. However, the correlation-based method tends to be a more conservative option.
 
 ## Getting started
 
@@ -39,3 +39,9 @@ alldata <- getDeleteomeExpData() # Loads Deleteome data
 getAllStrainNames(alldata) # Prints the gene deleted for each Deleteome strain
 ```
 
+## Dependencies
+Users will need to have the following R packages installed to run the example scripts:
+* [org.Sc.sgd.db](https://bioconductor.org/packages/release/data/annotation/html/org.Sc.sgd.db.html)
+* [gplots](https://www.rdocumentation.org/packages/gplots/versions/3.1.3)
+* [ggplot2](https://ggplot2.tidyverse.org)
+* [clusterProfiler](https://bioconductor.org/packages/release/bioc/html/clusterProfiler.html)
