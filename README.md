@@ -17,7 +17,7 @@ This work is described in
 
 Our software offers two methods for assessing similarity between transcriptomic profiles. The first quantifies similarity by conducting correlation tests on log2 fold-change values of transcriptomic profiles. The second method employs hypergeometric tests to determine whether the set of significantly altered genes shared among transcriptomic profiles occurs more frequently than expected by chance. 
 
-The first approach considers the magnitude of expression changes in transcriptional profiles, while the second approach focuses on whether a gene is differentially expressed or not, based on user-defined thresholds. 
+The first approach considers the magnitude of expression changes in differentially-expressed genes, while the second approach focuses on whether a gene is differentially expressed or not, based on user-defined thresholds. 
 
 In our studies with NUP170, we have observed that the two approaches yield similar results. The correlation-based method tends to be the more conservative option.
 
