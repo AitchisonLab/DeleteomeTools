@@ -10,7 +10,7 @@ Deleteome transcriptomic datasets can be downloaded from [https://deleteome.hols
 
 
 Our software was originally developed to identify gene products that are functionally associated with the nucleoporin NUP170.
-Our software uses the data in the Deleteome to identify genes that, when deleted, alter the yeast transcriptome in a way that is similar to the alterations caused by a NUP170 deletion.
+We used the data in the Deleteome to identify genes that, when deleted, alter the yeast transcriptome in a way that is similar to the alterations caused by a NUP170 deletion.
 This work is described in 
 
 [Kumar, et al. Nuclear pore complexes mediate subtelomeric gene silencing by regulating PCNA levels on chromatin. Journal of Cell Biology. (in press)](https://doi.org/10.1083/jcb.202207060)
