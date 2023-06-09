@@ -293,15 +293,15 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
     rowtitleprefix <- "Subtelomeric genes"
   }
   
-  genesThatCanBeCompared <- genesThatCanBeCompared$geneSymbol
-  
-  sigcorrheatmap <- data.frame(Gene=as.character(genesThatCanBeCompared), stringsAsFactors=F)
-  sigcorrheatmap[,mutantname] <- as.numeric(mutantProfile[mutantProfile$geneSymbol %in% genesThatCanBeCompared,3])
+  sigcorrheatmap <- data.frame(Gene=as.character(genesThatCanBeCompared$systematicName), stringsAsFactors=F)
+  sigcorrheatmap[,mutantname] <- as.numeric(mutantProfile[mutantProfile$systematicName %in% genesThatCanBeCompared$systematicName,3])
   
   # Collect transcriptional profiles for Deleteome strains that will be included in the heatmap
   for(cond in selectedConditions){
     condprofileALL <- getProfileForDeletion(alldata, cond, 0, 1, consoleMessages = F)
-    condhmdata <- condprofileALL[condprofileALL$geneSymbol %in% genesThatCanBeCompared,3]
+    condhmdatadf <- condprofileALL[condprofileALL$systematicName %in% genesThatCanBeCompared$systematicName, c(2,3)]
+    condhmdata <- condhmdatadf[,2]
+    names(condhmdata) <- condhmdatadf[,1]
     sigcorrheatmap[,cond] <- as.numeric(condhmdata)
   }
   
@@ -324,6 +324,7 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
   
   rowlabels <- rownames(mybigmat)
   rightmar <- 5
+  
   if( ! showRowLabels){
     rowlabels = rep("",dim(mybigmat)[1])
     rightmar <- 2
