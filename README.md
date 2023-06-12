@@ -1,7 +1,5 @@
 # Deleteome-Tools
 
-R code for identifying transcriptional similarities in single-gene yeast deletion strains within the Deleteome compendium.
-
 The Deleteome compendium, a collection of ~1,500 transcriptomes from single-gene deletion yeast strains, is described in 
 
 [Kemmeren P, et al. Large-scale genetic perturbations reveal regulatory networks and an abundance of gene-specific repressors. Cell. 2014 Apr 24;157(3):740-52.](https://pubmed.ncbi.nlm.nih.gov/24766815/)
@@ -9,7 +7,7 @@ The Deleteome compendium, a collection of ~1,500 transcriptomes from single-gene
 Deleteome transcriptomic datasets can be downloaded from [https://deleteome.holstegelab.nl](https://deleteome.holstegelab.nl)
 
 
-Our software was originally developed to identify gene products that are functionally associated with the nucleoporin NUP170.
+Our Deleteome-Tools software was originally developed to identify gene products that are functionally associated with the nucleoporin NUP170.
 We used the data in the Deleteome to identify genes that, when deleted, alter the yeast transcriptome in a way that is similar to the alterations caused by a NUP170 deletion.
 This work is described in 
 
