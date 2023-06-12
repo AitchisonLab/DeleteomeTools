@@ -1,6 +1,6 @@
 # Deleteome-Tools
 
-R code for identifying similarities in single-gene yeast deletion strains within the Deleteome transcriptomic compendium.
+R code for identifying transcriptional similarities in single-gene yeast deletion strains within the Deleteome compendium.
 
 The Deleteome compendium, a collection of ~1,500 transcriptomes from single-gene deletion yeast strains, is described in 
 
