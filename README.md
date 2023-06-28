@@ -10,7 +10,7 @@ Our Deleteome-Tools software was originally developed to identify gene products 
 We used the data in the Deleteome to identify genes that, when deleted, alter the yeast transcriptome in a way that is similar to the alterations caused by a NUP170 deletion.
 This work is described in 
 
-[Kumar, et al. Nuclear pore complexes mediate subtelomeric gene silencing by regulating PCNA levels on chromatin. Journal of Cell Biology. (in press)](https://doi.org/10.1083/jcb.202207060)
+[Kumar, et al. Nuclear pore complexes mediate subtelomeric gene silencing by regulating PCNA levels on chromatin. J Cell Biol (2023) 222 (9): e202207060](https://doi.org/10.1083/jcb.202207060)
 
 For any single-gene deletion profiled in the Deleteome, our software can be used to identify other single-gene deletion strains that are transcriptomically similar. It offers two methods for assessing similarity between transcriptomic profiles. The first quantifies similarity by conducting correlation tests on log2 fold-change values of transcriptomic profiles. The second method employs hypergeometric tests to determine whether the set of significantly altered genes shared among transcriptomic profiles occurs more frequently than expected by chance. 
 
