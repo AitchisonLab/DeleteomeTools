@@ -1,21 +1,18 @@
 # Deleteome-Tools
 
-R code for identifying similarities in single-gene yeast deletion strains within the Deleteome transcriptomic compendium.
-
-The Deleteome compendium, a collection of ~1,500 transcriptomes from single-gene deletion yeast strains, is described in 
+The Deleteome compendium, a publicly-available collection of ~1,500 transcriptomes from single-gene deletion yeast strains, is described in 
 
 [Kemmeren P, et al. Large-scale genetic perturbations reveal regulatory networks and an abundance of gene-specific repressors. Cell. 2014 Apr 24;157(3):740-52.](https://pubmed.ncbi.nlm.nih.gov/24766815/)
+and can be downloaded from [https://deleteome.holstegelab.nl](https://deleteome.holstegelab.nl)
 
-Deleteome transcriptomic datasets can be downloaded from [https://deleteome.holstegelab.nl](https://deleteome.holstegelab.nl)
 
-
-Our software was originally developed to identify gene products that are functionally associated with the nucleoporin NUP170.
-Our software uses the data in the Deleteome to identify genes that, when deleted, alter the yeast transcriptome in a way that is similar to the alterations caused by a NUP170 deletion.
+Our Deleteome-Tools software was originally developed to identify gene products that are functionally associated with the nucleoporin NUP170.
+We used the data in the Deleteome to identify genes that, when deleted, alter the yeast transcriptome in a way that is similar to the alterations caused by a NUP170 deletion.
 This work is described in 
 
-[Kumar, et al. Nuclear pore complexes mediate subtelomeric gene silencing by regulating PCNA levels on chromatin. Journal of Cell Biology. (in press)](https://doi.org/10.1083/jcb.202207060)
+[Kumar, et al. Nuclear pore complexes mediate subtelomeric gene silencing by regulating PCNA levels on chromatin. J Cell Biol (2023) 222 (9): e202207060](https://doi.org/10.1083/jcb.202207060)
 
-Our software offers two methods for assessing similarity between transcriptomic profiles. The first quantifies similarity by conducting correlation tests on log2 fold-change values of transcriptomic profiles. The second method employs hypergeometric tests to determine whether the set of significantly altered genes shared among transcriptomic profiles occurs more frequently than expected by chance. 
+For any single-gene deletion profiled in the Deleteome, our software can be used to identify other single-gene deletion strains that are transcriptomically similar. It offers two methods for assessing similarity between transcriptomic profiles. The first quantifies similarity by conducting correlation tests on log2 fold-change values of transcriptomic profiles. The second method employs hypergeometric tests to determine whether the set of significantly altered genes shared among transcriptomic profiles occurs more frequently than expected by chance. 
 
 The first approach considers the magnitude of expression changes in differentially-expressed genes, while the second approach focuses on whether a gene is differentially expressed or not, based on user-defined thresholds. 
 
