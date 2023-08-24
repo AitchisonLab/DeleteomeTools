@@ -532,10 +532,11 @@ getDeleteomeMatchesByReciprocalCorrelation = function(mutant=NA,           # Nam
       pval <- as.vector(correl["p.value"][[1]])
     }
     else{
+      # Not enough overlap in signatures for the strain
       Rval <- NA
       pval <- NA
-      message("Not enough overlap in signatures for ", cond)
     }
+    
     allCorrResults[h,] <- c(cond, Rval, pval)
     h = h+1
   }
