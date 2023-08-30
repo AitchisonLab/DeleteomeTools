@@ -266,8 +266,9 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
                                         selectedConditions=NA, # List of additional Deleteome strains to include in heatmap
                                         fileprefix=NA,         # String that can be added to beginning of heatmap file name. Appears after mutant name.
                                         titledesc="",          # Rationale for inclusion of additional strains in heatmap. Used in title of heatmap.
-                                        MthreshForTitle=NA,    # Log2 fold-change threshold used to get the mutant strain's signature. Only used in heatmap title.
-                                        pthreshForTitle=NA,    # P-value threhshold used to get the mutant strain's signature. Only used in heatmap title.
+                                        MthreshForTitle=NA,    # Log2 fold-change threshold used to get the mutant strain's signature. Only used in heatmap title and file name.
+                                        pthreshForTitle=NA,    # P-value threhshold used to get the mutant strain's signature. Only used in heatmap title and file name.
+                                        quantileForTitle=NA, # Percentile threshold used to select similar strains. Only used in heatmap title and file name.
                                         subteloGenesOnly=F,    # Whether to only include subtelomeric genes in the rows of the heatmap
                                         colFontSize=1,         # Font size for column labels
                                         showRowLabels=F,       # Whether to show row labels
@@ -282,11 +283,9 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
   # SO REMOVE ROWS IN MUTANTPROFILE THAT MATCH A COND
   genesThatCanBeCompared <- mutantProfile[ ! mutantProfile$geneSymbol %in% toupper(selectedConditions),]
   
-  subtelosuffix <- ""
   rowtitleprefix <- "Genes"
   
   if(subteloGenesOnly){
-    subtelosuffix <- "\n Subtelomeric genes only"
     gps <- getGenePositions()
     subgps <- gps[gps$dist_from_telo<25000,"Geneid"]
     genesThatCanBeCompared <- genesThatCanBeCompared[genesThatCanBeCompared$systematicName %in% subgps,]
@@ -311,8 +310,8 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
   mybreaks <- seq(-1.5, 1.5, length.out=101)
   
   if(printToFile){
-    hmfile <- paste0(thedir, "/output/Heatmaps/",mutantname,"_",fileprefix,"Heatmap_l2FC_",MthreshForTitle,"_p",
-                      pthreshForTitle,".jpg")
+    hmfile <- paste0(thedir, "/output/Heatmaps/",mutantname,"_",fileprefix,"Heatmap_l2FC",MthreshForTitle,"_p",
+                      pthreshForTitle,"_quantile",quantileForTitle,".jpg")
     jpeg(file = hmfile, 
             width=imagewidth, height = imageheight, res=300, units="px")
   }
@@ -321,8 +320,8 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
   }
   
   par(cex.main=0.75) ## this will affect also legend title font size
-  
-  rowlabels <- rownames(mybigmat)
+
+    rowlabels <- rownames(mybigmat)
   rightmar <- 5
   
   if( ! showRowLabels){
@@ -330,23 +329,31 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
     rightmar <- 2
   }
   
+  mycolnamesdeltaitalic <- colnames(mybigmat)
+  mycolnamesdeltaitalic <- lapply(mycolnamesdeltaitalic, function(x) bquote(italic(.(x)*Delta)))
+  
   # Make the heatmap object
-  clust <- heatmap.2(mybigmat,Colv=T, trace="none", symbreaks=T, 
+  clust <- heatmap.2(mybigmat, Colv = T, trace = "none", symbreaks = T, 
                      xlab = "Mutant strain", ylab = paste0(rowtitleprefix, " in ", mutantname, " deletion signature"),
                      labRow = rowlabels,
-                     symm=F,symkey=F, 
-                     scale="none", 
-                     breaks=mybreaks, 
-                     margins=c(6,rightmar), # Makes sure the y-axis label is more flush with plot
-                     cexCol=colFontSize, 
-                     cexRow=rowFontSize,
+                     labCol = as.expression(mycolnamesdeltaitalic),
+                     srtCol = 45,
+                     symm = F,
+                     symkey = F, 
+                     scale = "none", 
+                     breaks = mybreaks, 
+                     margins = c(6, rightmar), # Makes sure the y-axis label is more flush with plot
+                     cexCol = colFontSize, 
+                     cexRow = rowFontSize,
                      col = colorRampPalette(c("blue","white","red"))(100), 
                      key.title= "",
                      keysize = 1,
                      key.xlab = "Log2 fold-change vs. WT",
-                     main=paste0("Expression for ", mutantname, 
-                                 " deletion and other deleteome strains\nbased on ", titledesc, "\nLog2 fold-change cutoff: ",
-                                            MthreshForTitle, ", P-value cutoff: ", pthreshForTitle, subtelosuffix))
+                     main = bquote(atop("Expression for "*italic(.(mutantname)*Delta)*" and other strains included based on "*.(titledesc), 
+                                                "Log2 fold-change cutoff: "*.(MthreshForTitle)*", FDR P-value cutoff: "*.(pthreshForTitle)*", Quantile cutoff: "*.(quantileForTitle))
+                                   )
+                     )
+                     
   
   if(printToFile){ 
     dev.off()
@@ -599,7 +606,7 @@ getDeleteomeMatchesByReciprocalCorrelation = function(mutant=NA,           # Nam
   
   selectedConditions <- sigDirectRecipCorrResults[sigDirectRecipCorrResults$Deletion != mutant,"Deletion"]
   
-  outputfilename <- paste0(thedir, "/output/mutant_similarity/",mutant,"_sigCorr_L2FC_",minAbsLog2FC,"_Pcutoff_",pCutoff,".tsv")
+  outputfilename <- paste0(thedir, "/output/mutant_similarity/",mutant,"_sigCorr_L2FC",minAbsLog2FC,"_Pcutoff",pCutoff,"_quantile",quantileCutoff,".tsv")
   write.table(sigDirectRecipCorrResults[sigDirectRecipCorrResults$Deletion != mutant, c("Deletion","CorrCoefficient","Pvalue","Pvalue.FDR")], 
             outputfilename, row.names = F, col.names = T, sep="\t", quote=F)
   message("Results written to ", outputfilename)

@@ -11,13 +11,16 @@ mutantname <- "nup170" # The tool will find mutant strains transcriptionally sim
 
 Mthresh <- 0 # log2 fold-change cutoff for identifying differentially-expressed genes in deletion strain
 pthresh <- 0.05 # p-value cutoff for identifying differentially-expressed genes in deletion strain
+qthresh <- 0.05 # quantile cutoff for selecting similar deletion strains
 
 # Find similar strains in Deleteome
 selectedConditions <- getDeleteomeMatchesByReciprocalCorrelation(
                                                                  mutant=mutantname, 
                                                                  minAbsLog2FC = Mthresh, 
                                                                  pCutoff = pthresh, 
-                                                                 deleteomeData = alldata)
+                                                                 quantileCutoff = qthresh,
+                                                                 deleteomeData = alldata 
+                                                                 )
 
 # Show correlated mutants
 message("\nSimilar mutant strains:")
@@ -39,6 +42,7 @@ hm1 <- makeHeatmapDeleteomeMatches(mutantname=mutantname,
                                    titledesc="transcriptional similarity (reciprocal correlation)", 
                                    MthreshForTitle = Mthresh, 
                                    pthreshForTitle = pthresh,
+                                   quantileForTitle = qthresh,
                                    printToFile = T)
 
 # Generate heatmap for significantly correlated deleteome strains that only shows subtelomeric genes
@@ -50,7 +54,8 @@ hm2 <- makeHeatmapDeleteomeMatches(mutantname=mutantname,
                                    fileprefix = "sigCorrMutantsSubtelo", 
                                    titledesc="transcriptional similarity (reciprocal correlation)", 
                                    MthreshForTitle = Mthresh, 
-                                   pthreshForTitle = pthresh, 
+                                   pthreshForTitle = pthresh,
+                                   quantileForTitle = qthresh,
                                    subteloGenesOnly = T, 
                                    rowFontSize=0.275, 
                                    printToFile = T)
@@ -61,7 +66,8 @@ hm3 <- makeHeatmapDeleteomeMatches(mutantname=mutantname, mutantProfile,
                                    fileprefix = "specificMutants", 
                                    titledesc="manual selection", 
                                    MthreshForTitle = Mthresh, 
-                                   pthreshForTitle = pthresh, 
+                                   pthreshForTitle = pthresh,
+                                   quantileForTitle = qthresh,
                                    imagewidth = 2000,
                                    printToFile = T)
 
