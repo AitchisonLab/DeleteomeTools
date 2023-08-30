@@ -590,11 +590,12 @@ getDeleteomeMatchesByReciprocalCorrelation = function(mutant=NA,           # Nam
   allRecipCorrResultsNoNA <- na.omit(allRecipCorrResults)
   
   # find overlap between direct and reciprocal correlations
-  allSigRecipCorrResults <- allRecipCorrResultsNoNA[as.numeric(allRecipCorrResultsNoNA$Pvalue.FDR) <= pCutoff,]
+  # Limit to significant, positive reciprocal correlations
+  allSigRecipCorrResults <- allRecipCorrResultsNoNA[as.numeric(allRecipCorrResultsNoNA$Pvalue.FDR) <= pCutoff & allRecipCorrResultsNoNA$CorrCoefficient > 0,]  
   
-  sigDirectRecipCorrNames <- intersect(allSigRecipCorrResults$Deletion,allSigCorrResults$Deletion) # get all KO's that had significant direct and reciprocal correlations
+  sigDirectRecipCorrNames <- intersect(allSigRecipCorrResults$Deletion, allSigCorrResults$Deletion) # get all KO's that had significant direct and reciprocal correlations
   sigDirectRecipCorrResults <- allSigCorrResults[allSigCorrResults$Deletion %in% sigDirectRecipCorrNames,]
-  sigDirectRecipCorrResults <- sigDirectRecipCorrResults[order(sigDirectRecipCorrResults$CorrCoefficient,decreasing=T),] # sort by direct correlation Rval
+  sigDirectRecipCorrResults <- sigDirectRecipCorrResults[order(sigDirectRecipCorrResults$CorrCoefficient, decreasing=T),] # sort by direct correlation Rval
   
   selectedConditions <- sigDirectRecipCorrResults[sigDirectRecipCorrResults$Deletion != mutant,"Deletion"]
   
