@@ -4,11 +4,30 @@ library(ggplot2)
 
 thedir <- getwd() # Location of this script (assumes that working directory is the folder containing this script)
 
-getDeleteomeExpData <- function() {
+getDeleteomeExpData <- function(folder="") {
+  
   # Note that column name "atg4_del_1_vs_wt" was changed to "atg4_del_vs_wt"
-  message("Loading deleteome expression data from ", thedir)
-  load(paste0(thedir,"/deleteome_exp_data.RData"))
-  return(alldata)
+  filename <- "deleteome_exp_data.RData"
+  
+  if( ! is.na(folder) & ! is.null(folder) & folder != ""){
+    fullpath <- paste0(file.path(folder), "/", filename)
+    
+    if(file.exists(fullpath)){
+      message("Loading deleteome expression data from ", fullpath)
+      load(fullpath)
+      return(alldata)
+    }
+    else{
+      message("No Deleteome data file found at specified path ", fullpath)
+      return()
+    }
+  }
+  
+  else{
+    message("Loading deleteome expression data from current working directory: ", thedir)
+    load(paste0(thedir,"/",filename))
+    return(alldata)
+  }
 }
 
 
@@ -238,8 +257,8 @@ genomicRegionEnrichment <- function(genePositions=NULL,
 # By default, uses the list of mutants in the deleteome as the background for the enrichment tests
 # Performs enrichment test over GO:BP, GO:MF and GO:CC sub-ontologies
 doGOenrichmentOnDeleteomeMatches <- function(deleteomeData, genes=c(), 
-                                             useDeleteomeBackground=T, 
-                                             pthresh=0.05){ # uses gene names not systematic names
+                                             pthresh=0.05, 
+                                             useDeleteomeBackground = T){ # uses gene names not systematic names
   
   suppressMessages(suppressWarnings(require(clusterProfiler)))
   require(org.Sc.sgd.db)
@@ -334,7 +353,7 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
   
   # Make the heatmap object
   clust <- heatmap.2(mybigmat, Colv = T, trace = "none", symbreaks = T, 
-                     xlab = "Mutant strain", ylab = paste0(rowtitleprefix, " in ", mutantname, " deletion signature"),
+                     xlab = "Deletion strain", ylab = bquote(.(rowtitleprefix)*" in "*italic(.(mutantname)*Delta)*" signature"),
                      labRow = rowlabels,
                      labCol = as.expression(mycolnamesdeltaitalic),
                      srtCol = 45,
@@ -345,7 +364,7 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
                      margins = c(6, rightmar), # Makes sure the y-axis label is more flush with plot
                      cexCol = colFontSize, 
                      cexRow = rowFontSize,
-                     col = colorRampPalette(c("blue","white","red"))(100), 
+                     col = colorRampPalette(c("#0064FF","white","#DA0119"))(100), 
                      key.title= "",
                      keysize = 1,
                      key.xlab = "Log2 fold-change vs. WT",
@@ -456,6 +475,7 @@ makeGenomicPositionHistogram <- function(alldata=NULL,           # Full Deleteom
     geom_histogram(data = upDFgg, aes(x = dist, y = after_stat(count)), fill=upcolor, binwidth = 5, boundary=-5) +
     geom_histogram(data = downDFgg, aes(x = dist, y = -after_stat(count)), fill= downcolor, binwidth = 5, boundary=-5) +
     scale_x_continuous(breaks=seq(0,xmax,by=25)) +
+    scale_y_continuous(labels = abs) + 
     theme(plot.title = element_text(size=25, face="bold"), axis.text=element_text(size=11),
            axis.title=element_text(size = 18,face="plain"), axis.text.x = element_text(angle = 45, hjust=1)) +
     xlab(paste0("Distance from ",relativeTo," (kb)")) + 
