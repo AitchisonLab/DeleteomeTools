@@ -262,6 +262,7 @@ doGOenrichmentOnDeleteomeMatches <- function(deleteomeData, genes=c(),
   
   suppressMessages(suppressWarnings(require(clusterProfiler)))
   require(org.Sc.sgd.db)
+  require(clusterProfiler)
   
   genes <- toupper(genes)
   
