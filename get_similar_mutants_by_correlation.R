@@ -9,22 +9,20 @@ alldata <- getDeleteomeExpData() # Load all the deleteome expression data
 
 mutantname <- "nup170" # The tool will find mutant strains transcriptionally similar to the strain specified here
 
-Mthresh <- 0 # log2 fold-change cutoff for identifying differentially-expressed genes in deletion strain
+Mthresh <- 0.0 # log2 fold-change cutoff for identifying differentially-expressed genes in deletion strain
 pthresh <- 0.05 # p-value cutoff for identifying differentially-expressed genes in deletion strain
 qthresh <- 0.05 # quantile cutoff for selecting similar deletion strains
 
 # Find similar strains in Deleteome
-selectedConditions <- getDeleteomeMatchesByReciprocalCorrelation(
-                                                                 mutant=mutantname, 
+matchingStrains <- getDeleteomeMatchesByReciprocalCorrelation(   mutant=mutantname, 
                                                                  minAbsLog2FC = Mthresh, 
                                                                  pCutoff = pthresh, 
                                                                  quantileCutoff = qthresh,
-                                                                 deleteomeData = alldata 
-                                                                 )
+                                                                 deleteomeData = alldata)
 
 # Show correlated mutants
 message("\nSimilar mutant strains:")
-print(selectedConditions)
+print(matchingStrains)
 
 # Generate heatmap for significantly correlated deleteome mutants
 # First get a data frame that contains all the log2 fold-change and p-value info for the mutant strain 
@@ -37,7 +35,7 @@ mutantProfile <- getProfileForDeletion(delData = alldata,
 # Generate heatmap for significantly similar deleteome profiles
 hm1 <- makeHeatmapDeleteomeMatches(mutantname=mutantname, 
                                    mutantProfile, 
-                                   selectedConditions, 
+                                   matchingStrains, 
                                    fileprefix = "sigCorrMutants", 
                                    titledesc="transcriptional similarity (reciprocal correlation)", 
                                    MthreshForTitle = Mthresh, 
@@ -50,7 +48,7 @@ hm1 <- makeHeatmapDeleteomeMatches(mutantname=mutantname,
 # this will generate an error indicating insufficient rows or columns for the heatmap
 hm2 <- makeHeatmapDeleteomeMatches(mutantname=mutantname, 
                                    mutantProfile, 
-                                   selectedConditions, 
+                                   matchingStrains, 
                                    fileprefix = "sigCorrMutantsSubtelo", 
                                    titledesc="transcriptional similarity (reciprocal correlation)", 
                                    MthreshForTitle = Mthresh, 
@@ -83,9 +81,9 @@ makeGenomicPositionHistogram(alldata = alldata,
 
 # Run GO enrichment on similar mutants
 GOpadjcutoff = 0.05
-GO <- doGOenrichmentOnDeleteomeMatches(alldata, 
-                                       selectedConditions, 
-                                       pthresh = GOpadjcutoff)
+GO <- doGOenrichmentOnDeleteomeMatches(deleteomeData = alldata, 
+                                       genes = matchingStrains, 
+                                       padjthresh = GOpadjcutoff)
 GOoutputfile <- paste0(scriptloc,"/output/GO_enrichment/", mutantname, "_GOenrichmentResults_Corr_GOpadj",GOpadjcutoff,".tsv")
 write.table(GO, file=GOoutputfile, sep="\t", quote = F, row.names = F)
 message("Wrote GO enrichment results to ", GOoutputfile)

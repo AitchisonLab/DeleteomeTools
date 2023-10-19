@@ -257,7 +257,7 @@ genomicRegionEnrichment <- function(genePositions=NULL,
 # By default, uses the list of mutants in the deleteome as the background for the enrichment tests
 # Performs enrichment test over GO:BP, GO:MF and GO:CC sub-ontologies
 doGOenrichmentOnDeleteomeMatches <- function(deleteomeData, genes=c(), 
-                                             pthresh=0.05, 
+                                             padjthresh=0.05, 
                                              useDeleteomeBackground = T){ # uses gene names not systematic names
   
   suppressMessages(suppressWarnings(require(clusterProfiler)))
@@ -270,10 +270,10 @@ doGOenrichmentOnDeleteomeMatches <- function(deleteomeData, genes=c(),
   
   if(useDeleteomeBackground){
     bg <- toupper(getAllStrainNames(deleteomeData))
-    xGOUni <- enrichGO(genes, pvalueCutoff = pthresh, minGSSize = 2, OrgDb=org.Sc.sgd.db::org.Sc.sgd.db, keyType = "GENENAME", pAdjustMethod = "BH", universe = bg, ont="ALL")
+    xGOUni <- enrichGO(genes, pvalueCutoff = padjthresh, minGSSize = 2, OrgDb=org.Sc.sgd.db::org.Sc.sgd.db, keyType = "GENENAME", pAdjustMethod = "BH", universe = bg, ont="ALL")
   }
   else{
-    xGOUni <- enrichGO(genes, pvalueCutoff = pthresh, minGSSize = 2, OrgDb=org.Sc.sgd.db::org.Sc.sgd.db, keyType = "GENENAME", pAdjustMethod = "BH", ont="ALL")
+    xGOUni <- enrichGO(genes, pvalueCutoff = padjthresh, minGSSize = 2, OrgDb=org.Sc.sgd.db::org.Sc.sgd.db, keyType = "GENENAME", pAdjustMethod = "BH", ont="ALL")
   }
   detach("package:clusterProfiler", unload=TRUE)
   return(xGOUni[,])

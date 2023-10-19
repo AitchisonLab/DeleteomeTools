@@ -14,17 +14,15 @@ pthresh <- 0.05 # p-value cutoff for identifying differentially-expressed genes 
 qthresh <- 0.05 # quantile cutoff for selecting similar deletion strains
 
 # Find similar strains in Deleteome
-selectedConditions <- getDeleteomeMatchesByEnrichment(
-                                                      mutant=mutantname, 
+matchingStrains <- getDeleteomeMatchesByEnrichment(   mutant=mutantname, 
                                                       minAbsLog2FC = Mthresh, 
                                                       pCutoff = pthresh, 
                                                       quantileCutoff = qthresh,
-                                                      deleteomeData = alldata
-                                                      )
+                                                      deleteomeData = alldata)
 
 # Show correlated mutants
 message("\nSimilar mutant strains:")
-print(selectedConditions)
+print(matchingStrains)
 
 # Generate heatmap for significantly correlated deleteome mutants
 # First get a data frame that contains all the log2 fold-change and p-value info for the mutant strain 
@@ -37,7 +35,7 @@ mutantProfile <- getProfileForDeletion(delData = alldata,
 # Generate heatmap for significantly similar deleteome profiles
 hm1 <- makeHeatmapDeleteomeMatches(mutantname=mutantname, 
                                    mutantProfile, 
-                                   selectedConditions, 
+                                   matchingStrains, 
                                    fileprefix = "sigEnrichMutants", 
                                    titledesc="transcriptional similarity (signature enrichment)", 
                                    MthreshForTitle = Mthresh, 
@@ -51,7 +49,7 @@ hm1 <- makeHeatmapDeleteomeMatches(mutantname=mutantname,
 # this will generate an error indicating insufficient rows or columns for the heatmap
 hm2 <- makeHeatmapDeleteomeMatches(mutantname=mutantname, 
                                    mutantProfile, 
-                                   selectedConditions, 
+                                   matchingStrains, 
                                    fileprefix = "sigEnrichSubtelo", 
                                    titledesc="transcriptional similarity (signature enrichment)", 
                                    MthreshForTitle = Mthresh, 
@@ -83,9 +81,9 @@ makeGenomicPositionHistogram(alldata = alldata,
 
 # Run GO enrichment on similar mutants
 GOpadjcutoff = 0.05
-GO <- doGOenrichmentOnDeleteomeMatches(alldata, 
-                                       selectedConditions, 
-                                       pthresh = GOpadjcutoff)
+GO <- doGOenrichmentOnDeleteomeMatches(deleteomeData = alldata, 
+                                       genes = matchingStrains, 
+                                       padjthresh = GOpadjcutoff)
 GOoutputfile <- paste0(scriptloc,"/output/GO_enrichment/",mutantname,"_GOenrichmentResults_Enrich_GOpadj",GOpadjcutoff,".tsv")
 write.table(GO,file=GOoutputfile, sep="\t", quote = F, row.names = F)
 message("Wrote GO enrichment results to ", GOoutputfile)
