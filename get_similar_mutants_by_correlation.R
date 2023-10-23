@@ -14,11 +14,12 @@ pthresh <- 0.05 # p-value cutoff for identifying differentially-expressed genes 
 qthresh <- 0.05 # quantile cutoff for selecting similar deletion strains
 
 # Find similar strains in Deleteome
-matchingStrains <- getDeleteomeMatchesByReciprocalCorrelation(   mutant=mutantname, 
-                                                                 minAbsLog2FC = Mthresh, 
-                                                                 pCutoff = pthresh, 
-                                                                 quantileCutoff = qthresh,
-                                                                 deleteomeData = alldata)
+matchingStrains <- getDeleteomeMatchesByReciprocalCorrelation(delData = alldata,
+                                                              mutant=mutantname, 
+                                                              minAbsLog2FC = Mthresh, 
+                                                              pCutoff = pthresh, 
+                                                              quantileCutoff = qthresh
+                                                              )
 
 # Show correlated mutants
 message("\nSimilar mutant strains:")
@@ -33,7 +34,7 @@ mutantProfile <- getProfileForDeletion(delData = alldata,
                                        pthresh = pthresh)
 
 # Generate heatmap for significantly similar deleteome profiles
-hm1 <- makeHeatmapDeleteomeMatches(mutantname=mutantname, 
+hm1 <- makeHeatmapDeleteomeMatches(mutantname = mutantname, 
                                    mutantProfile, 
                                    matchingStrains, 
                                    fileprefix = "sigCorrMutants", 
@@ -46,7 +47,7 @@ hm1 <- makeHeatmapDeleteomeMatches(mutantname=mutantname,
 # Generate heatmap for significantly correlated deleteome strains that only shows subtelomeric genes
 # NOTE: if there are less than 2 subtelomeric genes in the strain's signature, 
 # this will generate an error indicating insufficient rows or columns for the heatmap
-hm2 <- makeHeatmapDeleteomeMatches(mutantname=mutantname, 
+hm2 <- makeHeatmapDeleteomeMatches(mutantname = mutantname, 
                                    mutantProfile, 
                                    matchingStrains, 
                                    fileprefix = "sigCorrMutantsSubtelo", 
@@ -59,7 +60,8 @@ hm2 <- makeHeatmapDeleteomeMatches(mutantname=mutantname,
                                    printToFile = T)
 
 # Generate heatmap using specific deleteome profiles
-hm3 <- makeHeatmapDeleteomeMatches(mutantname=mutantname, mutantProfile, 
+hm3 <- makeHeatmapDeleteomeMatches(mutantname = mutantname, 
+                                   mutantProfile, 
                                    c("hmo1","rif1","sir4","ctf8","ctf18","dcc1"), 
                                    fileprefix = "specificMutants", 
                                    titledesc="manual selection", 
@@ -71,7 +73,7 @@ hm3 <- makeHeatmapDeleteomeMatches(mutantname=mutantname, mutantProfile,
 
 
 # Make a mountain lake plot (this also reports subtelomeric enrichment p-values for the mutant's up- and down-regulated genes)
-makeGenomicPositionHistogram(alldata = alldata, 
+makeGenomicPositionHistogram(delData = alldata, 
                              mutant = mutantname, 
                              Mthresh = Mthresh, 
                              xmax=770, ymax = 40, 
@@ -81,7 +83,7 @@ makeGenomicPositionHistogram(alldata = alldata,
 
 # Run GO enrichment on similar mutants
 GOpadjcutoff = 0.05
-GO <- doGOenrichmentOnDeleteomeMatches(deleteomeData = alldata, 
+GO <- doGOenrichmentOnDeleteomeMatches(delData = alldata, 
                                        genes = matchingStrains, 
                                        padjthresh = GOpadjcutoff)
 GOoutputfile <- paste0(scriptloc,"/output/GO_enrichment/", mutantname, "_GOenrichmentResults_Corr_GOpadj",GOpadjcutoff,".tsv")

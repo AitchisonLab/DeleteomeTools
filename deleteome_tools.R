@@ -4,9 +4,10 @@ library(ggplot2)
 
 thedir <- getwd() # Location of this script (assumes that working directory is the folder containing this script)
 
-getDeleteomeExpData <- function(folder="") {
+
+getDeleteomeExpData <- function(folder="") {  # folder: parent folder containing the deleteome database object to load
   
-  # Note that column name "atg4_del_1_vs_wt" was changed to "atg4_del_vs_wt"
+  # Note that column name "atg4_del_1_vs_wt" was refactored to "atg4_del_vs_wt"
   filename <- "deleteome_exp_data.RData"
   
   if( ! is.na(folder) & ! is.null(folder) & folder != ""){
@@ -31,14 +32,16 @@ getDeleteomeExpData <- function(folder="") {
 }
 
 
-getPathToDeleteomeFolder <- function(){
-  return(thedir)
-}
+# Collect systematic gene names, M values (log2 fold-changes) and p-values for a given deletion.
+# Only microarrayed genes that meet M value and p-value cutoffs are included
+getProfileForDeletion <- function(
+                                  delData,           # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
+                                  deletionname,      # Name of deletion as string
+                                  Mthresh,           # The absolute log2 fold-change threshold when selecting differentially-expressed genes (use 0 to include all genes)
+                                  pthresh,           # The p-value threshold to use when selecting differentially-expressed genes (use 1 to include all genes)
+                                  consoleMessages=T  # Whether to output console messages
+                                  ){
 
-# collect systematicNames and M values (log2 fold-changes) for a given deletion
-# any column in the deleteome that doesn't have "del" in the name is ignored (a data frame with 0 rows is returned)
-getProfileForDeletion <- function(delData, deletionname, Mthresh, pthresh, consoleMessages=T){
-  
   if(consoleMessages){
     message(paste0("Getting log2 fold-change values for ", deletionname, " from deleteome"))
   }
@@ -69,23 +72,28 @@ getProfileForDeletion <- function(delData, deletionname, Mthresh, pthresh, conso
   
 }
 
-# Get names of all mutant strains in Deleteome data
-getAllStrainNames <- function(deleteomeData){
+
+# Get names of all deletion strains in Deleteome data
+getAllStrainNames <- function(
+                              delData  # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
+                              ){
   
   # This excludes strains in deleteome that start with "WT_" ("WT-MATA"    "WT-BY4743"  "WT-YPD"). 
   # From https://deleteome.holstegelab.nl/: "These In addition, three control experiments, matA versus matAlpha, 
   # YPD versus SC and BY4343 versus BY4342 (diploid versus haploid) have been added for easier comparison to external datasets."
-  colheads <- gsub("_vs.*","",names(deleteomeData))
+  colheads <- gsub("_vs.*","",names(delData))
   colheads <- gsub("_del","",colheads)
   colheads <- colheads[ ! colheads %in% c("systematicName","geneSymbol")] # exclude systematicName and geneSymbol columns
   
   return(sort(unique(colheads)))
 }
 
+
 # Get genomic locations for genes
-getGenePositions <- function(includeMito=F) # includeMito indicates whether to include mitochondrial genes
+getGenePositions <- function(
+                              includeMito=F  # Whether to include mitochondrial genes
+                              ) 
   {
-  
   gppath <- paste0(thedir, "/data/genePositions.csv")
   centpath <- paste0(thedir, "/data/YeastMine_CentromerePositions.tsv")
   cnlpath <- paste0(thedir, "/data/chrNameLength.txt")
@@ -118,25 +126,24 @@ getGenePositions <- function(includeMito=F) # includeMito indicates whether to i
     
     rowNum = which(genePositions[,1] == geneid)
     
-    # get chromosome containing the gene. Convert from data frame element to character array.
+    # Get chromosome containing the gene. Convert from data frame element to character array.
     chrName = genePositions[rowNum, "Chr"]
     
-    # get gene start position
+    # Get gene start position
     geneStartPos = genePositions[rowNum, "Start"]
     geneEndPos = genePositions[rowNum, "End"]
     
-    # look up chromosome length
+    # Look up chromosome length
     chrLength = chrNameLengths[which(chrNameLengths[,1] == chrName),2]
     
     distFromCent <- NA
     
     if(chrName!="Mito"){
-    # look up position of centromere on chromosome
+    # Look up position of centromere on chromosome
       chrCentStart <- as.integer(centPositions[centPositions$Description==paste0("Chromosome ",chrName, " centromere"),"Start"])
       chrCentEnd <- as.integer(centPositions[centPositions$Description==paste0("Chromosome ",chrName, " centromere"),"End"])
       
-      # compute distance from centromere
-      # NOTE: THIS COMPUTES DISTANCE USING EITHER START OR END OF GENE, WHICHEVER IS CLOSEST TO CENTROMERE
+      # Compute distance from centromere
       if(geneEndPos < chrCentStart){
         distFromCent <- chrCentStart-geneEndPos
       }
@@ -144,39 +151,40 @@ getGenePositions <- function(includeMito=F) # includeMito indicates whether to i
         distFromCent <- geneStartPos-chrCentEnd
       }
       else{
-        message("ERROR: ",geneid," is neither ahead of or behind centromere") # would only be thrown if a gene that overlaps the centromere
+        message("ERROR: ",geneid," is neither ahead of or behind centromere") # would only be thrown if a gene overlaps the centromere
         return(NULL)
       }
     }
     
-    # compute distance from telomere
+    # Compute distance from telomere
     distFromChrStart = (geneStartPos - 1)
     distFromChrEnd = (chrLength - geneStartPos)
     distFromTelo = min(distFromChrStart, distFromChrEnd)
     genePositions[rowNum, dftname] <- distFromTelo
-    
     genePositions[rowNum, dfcname] <- distFromCent
   }
-  return(genePositions) # Used to be na.omit(genePositions) but if include mitogenes, then dist from cent is included as NA
+  return(genePositions) # If including mitochondrial genes, then distance from centromere is included as NA
 }
 
+
 # Test enrichment for differentially-expressed genes in the subtelomeric region
-subtelomericEnrichment <- function(genePositions=NULL, # table of genes and their genomic positions (obtainable using getGenePositions())
-                                   systematicNamesBG,  # background list of genes for enrichment test
-                                   systematicNames,    # list of genes to test for enrichment
-                                   includeMito=F,      # whether to include mitochondrial genes in analysis
-                                   rangeInKB=25        # telomere length in kilobases
+subtelomericEnrichment <- function(genePositions=NULL, # Table of genes and their genomic positions (obtainable using getGenePositions())
+                                   systematicNamesBG,  # Background list of genes for enrichment test
+                                   systematicNames,    # List of genes to test for enrichment
+                                   includeMito=F,      # Whether to include mitochondrial genes in analysis
+                                   rangeInKB=25        # Telomere length in kilobases
                                    ){      
   
   return(genomicRegionEnrichment(genePositions=genePositions, systematicNamesBG=systematicNamesBG, systematicNames=systematicNames, includeMito=includeMito, relativeTo="telomere", rangeInKB=rangeInKB))
 }
 
+
 # Test enrichment for differentially-expressed genes in the centromeric region
-centromericEnrichment <- function(genePositions=NULL,  # table of genes and their genomic positions (obtainable using getGenePositions())
-                                  systematicNamesBG,   # background list of genes for enrichment test
-                                  systematicNames,     # list of genes to test for enrichment
-                                  includeMito=F,       # whether to include mitochondrial genes in analysis
-                                  rangeInKB=25         # size of genomic region before and after centromere considered to be centromeric
+centromericEnrichment <- function(genePositions=NULL,  # Table of genes and their genomic positions (obtainable using getGenePositions())
+                                  systematicNamesBG,   # Background list of genes for enrichment test
+                                  systematicNames,     # List of genes to test for enrichment
+                                  includeMito=F,       # Whether to include mitochondrial genes in analysis
+                                  rangeInKB=25         # Size of genomic region before and after centromere considered to be centromeric
                                   ){
   
   return(genomicRegionEnrichment(genePositions=genePositions, 
@@ -188,11 +196,12 @@ centromericEnrichment <- function(genePositions=NULL,  # table of genes and thei
 }
 
 
+# Perform genomic region enrichment tests
 genomicRegionEnrichment <- function(genePositions=NULL, 
                                     systematicNamesBG, 
                                     systematicNames, 
                                     includeMito=F, 
-                                    relativeTo="telomere",  # accepted values for relativeTo are "telomere" or "centromere"
+                                    relativeTo="telomere",  # accepted values are "telomere" or "centromere"
                                     rangeInKB=25){  
   
   if(is.null(genePositions)){
@@ -204,7 +213,7 @@ genomicRegionEnrichment <- function(genePositions=NULL,
     return()
   }
   
-  # limit the background set of genes to only those in systematicNamesBG
+  # Limit the background set of genes to only those in systematicNamesBG
   genePositions <- genePositions[which(genePositions$Geneid %in% systematicNamesBG),]
   
   dfname = "dist_from_telo"
@@ -215,9 +224,7 @@ genomicRegionEnrichment <- function(genePositions=NULL,
     dfkbname = "dist_from_cent_in_kb"
   }
   
-  
-  res <- data.frame(systematicName=as.character(systematicNames), 
-                    x=as.numeric(NA),stringsAsFactors=F)
+  res <- data.frame(systematicName=as.character(systematicNames), x=as.numeric(NA),stringsAsFactors=F)
   names(res)[2] <- dfkbname
   
   # Record distance from region for each gene in results
@@ -237,8 +244,7 @@ genomicRegionEnrichment <- function(genePositions=NULL,
   message("Done collecting gene distances from region")
   res <- na.omit(res)
 
-  # compute hypergeometrics to see if list of signficantly upregulated
-  # genes are enriched for genes near the region of interest
+  # compute hypergeometrics to see if list of signficantly upregulated genes are enriched for genes near the region of interest
   samplesuccesses <- length(which(res[,dfkbname]<=rangeInKB))
   samplesize <- length(res[,dfkbname])
   
@@ -252,13 +258,17 @@ genomicRegionEnrichment <- function(genePositions=NULL,
   return(hyperp)
 }
 
+
 # Perform GO enrichment on a list of genes
 # Gene names such as "nup170" should be used as input
-# By default, uses the list of mutants in the deleteome as the background for the enrichment tests
+# By default, uses the list of mutants in the Deleteome as the background for the enrichment tests
 # Performs enrichment test over GO:BP, GO:MF and GO:CC sub-ontologies
-doGOenrichmentOnDeleteomeMatches <- function(deleteomeData, genes=c(), 
-                                             padjthresh=0.05, 
-                                             useDeleteomeBackground = T){ # uses gene names not systematic names
+doGOenrichmentOnDeleteomeMatches <- function(
+                                             delData,                     # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
+                                             genes=c(),                   # A vector of gene names
+                                             padjthresh=0.05,             # FDR-adjusted P-value cutoff for GO enrichment significance 
+                                             useDeleteomeBackground = T   # Uses gene names, not systematic names
+                                             ){ 
   
   suppressMessages(suppressWarnings(require(clusterProfiler)))
   require(org.Sc.sgd.db)
@@ -269,7 +279,7 @@ doGOenrichmentOnDeleteomeMatches <- function(deleteomeData, genes=c(),
   message("Performing GO enrichment tests")
   
   if(useDeleteomeBackground){
-    bg <- toupper(getAllStrainNames(deleteomeData))
+    bg <- toupper(getAllStrainNames(delData))
     xGOUni <- enrichGO(genes, pvalueCutoff = padjthresh, minGSSize = 2, OrgDb=org.Sc.sgd.db::org.Sc.sgd.db, keyType = "GENENAME", pAdjustMethod = "BH", universe = bg, ont="ALL")
   }
   else{
@@ -288,7 +298,7 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
                                         titledesc="",          # Rationale for inclusion of additional strains in heatmap. Used in title of heatmap.
                                         MthreshForTitle=NA,    # Log2 fold-change threshold used to get the mutant strain's signature. Only used in heatmap title and file name.
                                         pthreshForTitle=NA,    # P-value threhshold used to get the mutant strain's signature. Only used in heatmap title and file name.
-                                        quantileForTitle=NA, # Percentile threshold used to select similar strains. Only used in heatmap title and file name.
+                                        quantileForTitle=NA,   # Percentile threshold used to select similar strains. Only used in heatmap title and file name.
                                         subteloGenesOnly=F,    # Whether to only include subtelomeric genes in the rows of the heatmap
                                         colFontSize=1,         # Font size for column labels
                                         showRowLabels=F,       # Whether to show row labels
@@ -297,14 +307,12 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
                                         imageheight=2400,      # If writing to file, the Width of the saved image in pixels
                                         printToFile=T          # Whether to write heatmap to a file or show in new window
                                         ){
-  # make heatmap comparing all significantly matched mutants to mutant of interest
-  
-  # SOMETIMES THE COND IS IN THE MUTANTPROFILE$GENESYMBOL, BUT NOT IN THE CONDPROFILEALL
-  # SO REMOVE ROWS IN MUTANTPROFILE THAT MATCH A COND
-  genesThatCanBeCompared <- mutantProfile[ ! mutantProfile$geneSymbol %in% toupper(selectedConditions),]
+  # Make heatmap comparing all significantly matched mutants to mutant of interest
+  genesThatCanBeCompared <- mutantProfile[ ! mutantProfile$geneSymbol %in% toupper(selectedConditions),]  # Omit mutantname from list of similar mutants
   
   rowtitleprefix <- "Genes"
   
+  # If we're only considering subtelomeric genes...remove genes outside the region
   if(subteloGenesOnly){
     gps <- getGenePositions()
     subgps <- gps[gps$dist_from_telo<25000,"Geneid"]
@@ -327,6 +335,7 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
   mybigmat <- data.matrix(sigcorrheatmap[,-1])
   rownames(mybigmat) <- sigcorrheatmap$Gene
   
+  # Set colormap scale
   mybreaks <- seq(-1.5, 1.5, length.out=101)
   
   if(printToFile){
@@ -339,7 +348,7 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
     dev.new(width=10,height=8,noRStudioGD = TRUE)
   }
   
-  par(cex.main=0.75) ## this will affect also legend title font size
+  par(cex.main=0.75) ## Set size of main title and legend title
 
     rowlabels <- rownames(mybigmat)
   rightmar <- 5
@@ -385,7 +394,7 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
 
 
 # Mountain lake plots
-makeGenomicPositionHistogram <- function(alldata=NULL,           # Full Deleteome data set object (can be obtained using getDeleteomeExpData())
+makeGenomicPositionHistogram <- function(delData=NULL,           # Full Deleteome data set object (can be obtained using getDeleteomeExpData())
                                          mutant=NULL,            # Name of Deleteome mutant strain to analyze
                                          genePositions=NULL,     # Table of genes and genomic positions (can be obtained using getGenePositions())
                                          relativeTo="telomere",  # can be "telomere" or "centromere"
@@ -406,9 +415,9 @@ makeGenomicPositionHistogram <- function(alldata=NULL,           # Full Deleteom
   
   message("Making genomic position histogram for mutant ", mutant)
   
-  if(is.null(alldata)){
+  if(is.null(delData)){
     message("Loading full deleteome data set")
-    alldata <- getCachedDeleteomeAll()
+    delData <- getCachedDeleteomeAll()
   }
   
   if(is.null(genePositions)){
@@ -426,11 +435,11 @@ makeGenomicPositionHistogram <- function(alldata=NULL,           # Full Deleteom
   # Use the following to show VdVFig3 plots of selected mutants
   allDF <- genePositions[,relativeToCol]/1000 # get all distance from telomere numbers; filter out mitochondrial genes? If so: genePositions$Chr != 'Mito'
 
-  mutantProfile <- getProfileForDeletion(alldata, mutant, Mthresh, pthresh, consoleMessages = F)
+  mutantProfile <- getProfileForDeletion(delData, mutant, Mthresh, pthresh, consoleMessages = F)
   
   profileUP <- mutantProfile[mutantProfile[,3] > Mthresh, ]
   profileDOWN <- mutantProfile[mutantProfile[,3] <= -Mthresh, ]
-  profileAll <- getProfileForDeletion(alldata, mutant, 0, 999, consoleMessages = F)
+  profileAll <- getProfileForDeletion(delData, mutant, 0, 1.0, consoleMessages = F)
   
   upDF <- genePositions[genePositions$Geneid %in% profileUP$systematicName,relativeToCol]
   downDF <- genePositions[genePositions$Geneid %in% profileDOWN$systematicName,relativeToCol]
@@ -470,6 +479,7 @@ makeGenomicPositionHistogram <- function(alldata=NULL,           # Full Deleteom
   allDFgg <- as.data.frame(allDF)
   names(allDFgg) <- "dist"
   
+  # Create plot with ggplot
   p <- ggplot() +
     geom_histogram(data = allDFgg, aes(x = dist, y = after_stat(count)/3), fill="gray", binwidth = 5, boundary=-5) + 
     geom_histogram(data = allDFgg, aes(x = dist, y = -after_stat(count)/3), fill="gray", binwidth = 5, boundary=-5) + 
@@ -504,29 +514,29 @@ makeGenomicPositionHistogram <- function(alldata=NULL,           # Full Deleteom
 }
 
 # Find mutants with similar expression profiles using hypergeometric enrichment tests
-getDeleteomeMatchesByReciprocalCorrelation = function(mutant=NA,           # Name of Deleteome strain to analyze
+getDeleteomeMatchesByReciprocalCorrelation = function(delData=NA,          # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
+                                                      mutant=NA,           # Name of Deleteome strain to analyze
                                                       minAbsLog2FC=0,      # Log2 fold-change cutoff used to classify genes as differentially expressed 
                                                                            #   (absolute value of log2 fold-change must be higher than minAbsLog2FC)
                                                       pCutoff=0.05,        # P-value cutoff used to identify differentially-expressed genes
                                                       quantileCutoff=0.05, # Quantile cutoff for selecting the Deleteome matches with highest confidence
-                                                      deleteomeData=NA,    # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
                                                       showMessages = F     # Whether to output progress messages
                                                       ){
   
   message("Getting deleteome matches by reciprocal correlation...")
-  alldata <- deleteomeData
-  
-  if( ! is.data.frame(alldata)){
-    alldata <- getCachedDeleteomeAll()
+
+  if( ! is.data.frame(delData)){
+    delData <- getCachedDeleteomeAll()
   }
   
-  conds <- getAllStrainNames(alldata)
+  conditions <- getAllStrainNames(delData)
   
-  if( ! mutant %in% conds){
+  if( ! mutant %in% conditions){
     stop(paste0(mutant, " is not in deleteome"))
   }
   
-  mutantProfile <- getProfileForDeletion(alldata, mutant, minAbsLog2FC, pCutoff, consoleMessages = showMessages)
+  # Get the query strain's profile (signature)
+  mutantProfile <- getProfileForDeletion(delData, mutant, minAbsLog2FC, pCutoff, consoleMessages = showMessages)
   
   if(dim(mutantProfile)[1]==0){
     message(c(mutant," had no significantly changed genes, based on M-value and p-value thresholds"))
@@ -539,10 +549,7 @@ getDeleteomeMatchesByReciprocalCorrelation = function(mutant=NA,           # Nam
                                CorrCoefficient=as.numeric(),
                                Pvalue=as.numeric(), 
                                stringsAsFactors=F)
-  
   h = 1
-  
-  conditions <- getAllStrainNames(alldata)
   
   for(cond in conditions){
     
@@ -550,11 +557,11 @@ getDeleteomeMatchesByReciprocalCorrelation = function(mutant=NA,           # Nam
       next() # Skip the WT control experiments in the deleteome
     }
     
-    allconddata <- getProfileForDeletion(alldata, cond, 0, 1, consoleMessages = showMessages)
+    allconddata <- getProfileForDeletion(delData, cond, 0, 1, consoleMessages = showMessages)
     intrsct <- intersect(mutantProfile$systematicName, allconddata$systematicName) # need to do this b/c condition profile won't include the KO'd gene, which might be in the mutant's profile
     
     if(length(intrsct) > 2){
-      
+      # Perform correlation test
       correl <- cor.test(allconddata[allconddata$systematicName %in% intrsct,3],mutantProfile[mutantProfile$systematicName %in% intrsct,3])
       Rval <- as.vector(correl["estimate"][[1]])
       pval <- as.vector(correl["p.value"][[1]])
@@ -569,10 +576,9 @@ getDeleteomeMatchesByReciprocalCorrelation = function(mutant=NA,           # Nam
     h = h+1
   }
   
-  allCorrResults$Pvalue.FDR <- as.numeric(p.adjust(allCorrResults$Pvalue, method = "BH"))
+  allCorrResults$Pvalue.FDR <- as.numeric(p.adjust(allCorrResults$Pvalue, method = "BH"))  # FDR-adjustment
   
   allCorrResultsNoNA <- allCorrResults[ ! is.na(allCorrResults$CorrCoefficient) & ! is.na(allCorrResults$Pvalue), ]
-  
   allCorrResultsNoNA$CorrCoefficient <- as.numeric(allCorrResultsNoNA$CorrCoefficient)
   allCorrResultsNoNA$Pvalue <- as.numeric(allCorrResultsNoNA$Pvalue)
   allCorrResultsNoNA$Pvalue.FDR <- as.numeric(allCorrResultsNoNA$Pvalue.FDR)
@@ -580,23 +586,21 @@ getDeleteomeMatchesByReciprocalCorrelation = function(mutant=NA,           # Nam
   
   allSigCorrResults <- allCorrResultsNoNA[allCorrResultsNoNA$CorrCoefficient > 0,] # limit to positive correlations
   
-  pvalcutoff <- quantile(allSigCorrResults$Pvalue.FDR, quantileCutoff) # get mutants with pvals that were significantly better than overall
-  
+  pvalcutoff <- quantile(allSigCorrResults$Pvalue.FDR, quantileCutoff) # get mutants with p-values that were in the desired quantile
   
   allSigCorrResults <- allSigCorrResults[allSigCorrResults$Pvalue.FDR < pvalcutoff,]
   allSigCorrResults <- allSigCorrResults[order(allSigCorrResults$CorrCoefficient,decreasing=T),]
   
-  
-  # for each signifcantly correlated mutant, see if reciprocal correlation is also significant
+  # for each signifcantly correlated deletion strain, see if reciprocal correlation is also significant
   allRecipCorrResults = data.frame(matrix(ncol=3, nrow=length(allSigCorrResults$Deletion)))
   names(allRecipCorrResults) = c("Deletion", "CorrCoefficient","Pvalue")
   
   m = 1
   
-  mutantProfileANY <- getProfileForDeletion(alldata, mutant, 0, 1, consoleMessages = showMessages)
+  mutantProfileANY <- getProfileForDeletion(delData, mutant, 0, 1, consoleMessages = showMessages)
   for(cond in allSigCorrResults$Deletion){
     
-    condprofile <- getProfileForDeletion(alldata, cond, minAbsLog2FC, pCutoff, consoleMessages = showMessages)
+    condprofile <- getProfileForDeletion(delData, cond, minAbsLog2FC, pCutoff, consoleMessages = showMessages)
     
     intrsct <- intersect(mutantProfileANY$systematicName,condprofile$systematicName) # need to do this b/c condition profile won't include the KO'd gene, which might be in the mutant's profile
     
@@ -617,43 +621,40 @@ getDeleteomeMatchesByReciprocalCorrelation = function(mutant=NA,           # Nam
   allRecipCorrResults$Pvalue.FDR <- p.adjust(allRecipCorrResults$Pvalue, method="BH")
   allRecipCorrResultsNoNA <- na.omit(allRecipCorrResults)
   
-  # find overlap between direct and reciprocal correlations
-  # Limit to significant, positive reciprocal correlations
+  # Find overlap between direct and reciprocal correlations. Limit results to significant, positive reciprocal correlations.
   allSigRecipCorrResults <- allRecipCorrResultsNoNA[as.numeric(allRecipCorrResultsNoNA$Pvalue.FDR) <= pCutoff & allRecipCorrResultsNoNA$CorrCoefficient > 0,]  
   
   sigDirectRecipCorrNames <- intersect(allSigRecipCorrResults$Deletion, allSigCorrResults$Deletion) # get all KO's that had significant direct and reciprocal correlations
   sigDirectRecipCorrResults <- allSigCorrResults[allSigCorrResults$Deletion %in% sigDirectRecipCorrNames,]
   sigDirectRecipCorrResults <- sigDirectRecipCorrResults[order(sigDirectRecipCorrResults$CorrCoefficient, decreasing=T),] # sort by direct correlation Rval
   
-  selectedConditions <- sigDirectRecipCorrResults[sigDirectRecipCorrResults$Deletion != mutant,"Deletion"]
+  similarStrains <- sigDirectRecipCorrResults[sigDirectRecipCorrResults$Deletion != mutant,"Deletion"]
   
   outputfilename <- paste0(thedir, "/output/mutant_similarity/",mutant,"_sigCorr_L2FC",minAbsLog2FC,"_Pcutoff",pCutoff,"_quantile",quantileCutoff,".tsv")
   write.table(sigDirectRecipCorrResults[sigDirectRecipCorrResults$Deletion != mutant, c("Deletion","CorrCoefficient","Pvalue","Pvalue.FDR")], 
             outputfilename, row.names = F, col.names = T, sep="\t", quote=F)
   message("Results written to ", outputfilename)
   
-  if(length(selectedConditions)==0){
+  if(length(similarStrains)==0){
     message("Could not find any deletion mutants with signatures that significantly overlapped with ", mutant, " deletion")
   }
   
-  return(selectedConditions) # Returns list of Deleteome strains matching the input strain
+  return(similarStrains) # Returns list of Deleteome strains matching the input strain
 }
 
 
-
-
-# Method to find similar deleteome mutants using hypergeometric-based approach
+# Method to find similar Deleteome mutants using hypergeometric-based approach
 getDeleteomeMatchesByEnrichment <- function(mutant=NA,           # Name of Deleteome strain to analyze
                                             minAbsLog2FC=0,      # Log2 fold-change cutoff used to classify genes as differentially expressed 
                                                                  #   (absolute value of log2 fold-change must be higher than minAbsLog2FC)
                                             pCutoff=0.05,        # P-value cutoff used to identify differentially-expressed genes
                                             quantileCutoff=0.05, # Quantile cutoff for selecting the Deleteome matches with highest confidence
-                                            deleteomeData=NA,    # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
+                                            delData=NA,          # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
                                             showMessages = F     # Whether to output progress messages
                                             ){
   
   message("Getting deleteome matches based on enrichment tests...")
-  alldata <- deleteomeData
+  alldata <- delData
   
   if( ! is.data.frame(alldata)){
     alldata <- getCachedDeleteomeAll()
@@ -673,8 +674,9 @@ getDeleteomeMatchesByEnrichment <- function(mutant=NA,           # Name of Delet
   
   ndeleteomegenes <- length(getProfileForDeletion(alldata, mutant, 0, 1, consoleMessages = showMessages)$systematicName)
   
+  # Get signature for query strain
   mutantprofile <- getProfileForDeletion(alldata, mutant, minAbsLog2FC, pCutoff, consoleMessages = showMessages)
-  mutantprofileALL <- getProfileForDeletion(alldata, mutant, 0, 1.1, consoleMessages = showMessages)
+  mutantprofileALL <- getProfileForDeletion(alldata, mutant, 0, 1.0, consoleMessages = showMessages)
   
   if(dim(mutantprofile)[1]==0){
     message(c(mutant," had no significantly changed genes, based on M-value and p-value thresholds"))
@@ -706,28 +708,26 @@ getDeleteomeMatchesByEnrichment <- function(mutant=NA,           # Name of Delet
   
   hypergs$HyperGpvalFDR <- p.adjust(hypergs$HyperGpval, method = "BH")
   
-  fivepctcutoff <- quantile(hypergs$HyperGpvalFDR, quantileCutoff) # make sure that we are only using the top 5% of p-values
+  fivepctcutoff <- quantile(hypergs$HyperGpvalFDR, quantileCutoff) # make sure that we are only using the top X% of p-values
+  sighypergs <- hypergs[hypergs$HyperGpvalFDR<=pCutoff & hypergs$HyperGpvalFDR<=fivepctcutoff,] # X% cutoff and must meet significance criteria
   
-  sighypergs <- hypergs[hypergs$HyperGpvalFDR<=pCutoff & hypergs$HyperGpvalFDR<=fivepctcutoff,] # 5% cutoff and must meet significance criteria
+  similarStrains <- sighypergs[order(sighypergs$HyperGpvalFDR,decreasing=F),"Condition"] 
   
-  orderedconds <- sighypergs[order(sighypergs$HyperGpvalFDR,decreasing=F),"Condition"] 
-  
-  if(length(orderedconds)==0){
+  if(length(similarStrains)==0){
     message("Could not find any deletion mutants with signatures that significantly overlapped with ", mutant, " deletion")
     return(c())
   }
   
-  selectedConditions <- orderedconds
   sigresults <- sighypergs[order(sighypergs$HyperGpvalFDR,decreasing=F),1:3]
   sigresultsfile <- paste0(thedir, "/output/mutant_similarity/", mutant, "_sigHyperG_L2FC_",minAbsLog2FC,"_Pcutoff_",pCutoff,".tsv")
-  write.table(sigresults, file = sigresultsfile,
-              sep="\t", quote=F, row.names = F, col.names = T)
+  write.table(sigresults, file = sigresultsfile, sep="\t", quote=F, row.names = F, col.names = T)
   message("Results written to ", sigresultsfile)
   
-  return(selectedConditions)
+  return(similarStrains)
 }
 
-# Used in hypergeometric analysis
+
+# Used in hypergeometric analysis to identify genes that changed expression in the same direction
 computeDirectionalMatches <- function(profile1=NA, profile2=NA){
   
   profile1 <- profile1[order(profile1$systematicName),]
