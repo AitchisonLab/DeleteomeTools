@@ -21,7 +21,7 @@ In our studies with NUP170, we have observed that the two approaches yield simil
 ## Getting started
 
 * Clone this repository to your location of choice.
-* Open the _get_similar_mutants_by_correlation.R_ script in R/RStudio and run it. This will identify deletion strains in the Deleteome that are similar to the NUP170 deletion strain using the correlation-based methodology described above. (Run _get_similar_mutants_by_hypergeometric.R_ to perform the same analysis using the hypergeometric-based alternative.)
+* Open the _get_similar_mutants_by_correlation.R_ script in R/RStudio and run it (e.g. by using "Source" in RStudio). This will identify deletion strains in the Deleteome that are similar to the NUP170 deletion strain using the correlation-based methodology described above. (Run _get_similar_mutants_by_hypergeometric.R_ to perform the same analysis using the hypergeometric-based alternative.)
 * A table showing the ranked list of similar deletion strains is saved to the "output/mutant_similarity" folder within the repository.
 * The example script will also generate heatmaps showing gene expression values across the similar Deleteome strains it identifies. These are saved in the "output/heatmaps" folder. 
 * A plot showing numbers of significantly up- and down-regulated genes according to their distance from telomeres will also be shown. We have used these "mountain lake" plots to identify and illustrate subtelomeric silencing defects in the NUP170 deletion strain as well as other Deleteome strains.
