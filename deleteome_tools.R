@@ -339,7 +339,7 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
   mybreaks <- seq(-1.5, 1.5, length.out=101)
   
   if(printToFile){
-    hmfile <- paste0(thedir, "/output/Heatmaps/",mutantname,"_",fileprefix,"Heatmap_l2FC",MthreshForTitle,"_p",
+    hmfile <- paste0(thedir, "/output/heatmaps/",mutantname,"_",fileprefix,"Heatmap_l2FC",MthreshForTitle,"_p",
                       pthreshForTitle,"_quantile",quantileForTitle,".jpg")
     jpeg(file = hmfile, 
             width=imagewidth, height = imageheight, res=300, units="px")
