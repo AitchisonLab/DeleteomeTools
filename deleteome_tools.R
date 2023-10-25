@@ -339,7 +339,7 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
   mybreaks <- seq(-1.5, 1.5, length.out=101)
   
   if(printToFile){
-    hmfile <- paste0(thedir, "/output/heatmaps/",mutantname,"_",fileprefix,"Heatmap_l2FC",MthreshForTitle,"_p",
+    hmfile <- paste0(thedir, "/output/heatmaps/",mutantname,"_",fileprefix,"_Heatmap_l2FC",MthreshForTitle,"_p",
                       pthreshForTitle,"_quantile",quantileForTitle,".jpg")
     jpeg(file = hmfile, 
             width=imagewidth, height = imageheight, res=300, units="px")
@@ -719,7 +719,7 @@ getDeleteomeMatchesByEnrichment <- function(mutant=NA,           # Name of Delet
   }
   
   sigresults <- sighypergs[order(sighypergs$HyperGpvalFDR,decreasing=F),1:3]
-  sigresultsfile <- paste0(thedir, "/output/mutant_similarity/", mutant, "_sigHyperG_L2FC_",minAbsLog2FC,"_Pcutoff_",pCutoff,".tsv")
+  sigresultsfile <- paste0(thedir, "/output/mutant_similarity/", mutant, "_sigHyperG_L2FC",minAbsLog2FC,"_Pcutoff",pCutoff,"_quantile",quantileCutoff,".tsv")
   write.table(sigresults, file = sigresultsfile, sep="\t", quote=F, row.names = F, col.names = T)
   message("Results written to ", sigresultsfile)
   
