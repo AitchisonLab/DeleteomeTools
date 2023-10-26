@@ -34,8 +34,7 @@ getDeleteomeExpData <- function(folder="") {  # folder: parent folder containing
 
 # Collect systematic gene names, M values (log2 fold-changes) and p-values for a given deletion.
 # Only microarrayed genes that meet M value and p-value cutoffs are included
-getProfileForDeletion <- function(
-                                  delData,           # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
+getProfileForDeletion <- function(delData,           # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
                                   deletionname,      # Name of deletion as string
                                   Mthresh,           # The absolute log2 fold-change threshold when selecting differentially-expressed genes (use 0 to include all genes)
                                   pthresh,           # The p-value threshold to use when selecting differentially-expressed genes (use 1 to include all genes)
@@ -70,8 +69,7 @@ getProfileForDeletion <- function(
 
 
 # Get names of all deletion strains in Deleteome data
-getAllStrainNames <- function(
-                              delData  # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
+getAllStrainNames <- function(delData  # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
                               ){
   
   colheads <- gsub("_vs.*","",names(delData))
@@ -83,10 +81,8 @@ getAllStrainNames <- function(
 
 
 # Get genomic locations for genes
-getGenePositions <- function(
-                              includeMito=F  # Whether to include mitochondrial genes
-                              ) 
-  {
+getGenePositions <- function(includeMito=F  # Whether to include mitochondrial genes
+                              ){
   gppath <- paste0(thedir, "/data/genePositions.csv")
   centpath <- paste0(thedir, "/data/YeastMine_CentromerePositions.tsv")
   cnlpath <- paste0(thedir, "/data/chrNameLength.txt")
@@ -144,7 +140,7 @@ getGenePositions <- function(
         distFromCent <- geneStartPos-chrCentEnd
       }
       else{
-        message("ERROR: ",geneid," is neither ahead of or behind centromere") # would only be thrown if a gene overlaps the centromere
+        message("ERROR: ",geneid," is neither ahead of nor behind centromere") # would only be thrown if a gene overlaps the centromere
         return(NULL)
       }
     }
@@ -256,8 +252,7 @@ genomicRegionEnrichment <- function(genePositions=NULL,
 # Gene names such as "nup170" should be used as input
 # By default, uses the list of mutants in the Deleteome as the background for the enrichment tests
 # Performs enrichment test over GO:BP, GO:MF and GO:CC sub-ontologies
-doGOenrichmentOnDeleteomeMatches <- function(
-                                             delData,                     # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
+doGOenrichmentOnDeleteomeMatches <- function(delData,                     # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
                                              genes=c(),                   # A vector of gene names
                                              padjthresh=0.05,             # FDR-adjusted P-value cutoff for GO enrichment significance 
                                              useDeleteomeBackground = T   # Uses gene names, not systematic names
@@ -372,10 +367,8 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
                      keysize = 1,
                      key.xlab = "Log2 fold-change vs. WT",
                      main = bquote(atop("Expression for "*italic(.(mutantname)*Delta)*" and other strains included based on "*.(titledesc), 
-                                                "Log2 fold-change cutoff: "*.(MthreshForTitle)*", FDR P-value cutoff: "*.(pthreshForTitle)*", Quantile cutoff: "*.(quantileForTitle))
-                                   )
+                                                "Log2 fold-change cutoff: "*.(MthreshForTitle)*", FDR P-value cutoff: "*.(pthreshForTitle)*", Quantile cutoff: "*.(quantileForTitle)))
                      )
-                     
   
   if(printToFile){ 
     dev.off()
