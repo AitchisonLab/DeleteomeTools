@@ -47,10 +47,6 @@ getProfileForDeletion <- function(
   }
   
   McolSuffix <- "_wt"
-  if("deleteomeResponsiveOnly" %in% class(delData)){
-    McolSuffix <- "_wt_1"
-  }
-  
   Mcolname <- paste0(deletionname,"_del_vs",McolSuffix)
   pcolname <- paste0(deletionname,"_del_vs_wt_2")
   
@@ -78,9 +74,6 @@ getAllStrainNames <- function(
                               delData  # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
                               ){
   
-  # This excludes strains in deleteome that start with "WT_" ("WT-MATA"    "WT-BY4743"  "WT-YPD"). 
-  # From https://deleteome.holstegelab.nl/: "These In addition, three control experiments, matA versus matAlpha, 
-  # YPD versus SC and BY4343 versus BY4342 (diploid versus haploid) have been added for easier comparison to external datasets."
   colheads <- gsub("_vs.*","",names(delData))
   colheads <- gsub("_del","",colheads)
   colheads <- colheads[ ! colheads %in% c("systematicName","geneSymbol")] # exclude systematicName and geneSymbol columns
@@ -686,7 +679,9 @@ getDeleteomeMatchesByEnrichment <- function(mutant=NA,           # Name of Delet
   # compute hypergeometric test to find mutants whose signatures are enriched for the mutant of interest's signature
   for(cond in conds){
     
-    if(cond==mutant){ next }
+    if(cond==mutant | cond %in% c("wt_matA","wt_by4743","wt_ypd")){
+      next() # Skip the query strain and WT control experiments in the deleteome
+    }
     
     profile <- getProfileForDeletion(alldata,cond,minAbsLog2FC,pCutoff, consoleMessages = showMessages)
     profileint <- computeDirectionalMatches(profile,mutantprofile)
