@@ -258,20 +258,85 @@ doGOenrichmentOnDeleteomeMatches <- function(delData,                     # Full
                                              useDeleteomeBackground = T   # Uses gene names, not systematic names
                                              ){ 
   
+  message("Performing GO enrichment tests")
+  
   suppressMessages(suppressWarnings(require(clusterProfiler)))
   require(org.Sc.sgd.db)
   require(clusterProfiler)
   
+  allstrainnames <- toupper(getAllStrainNames(delData))
+  
+  allgenenames <- keys(org.Sc.sgd.db, keytype = "GENENAME")
+  allorfs <- keys(org.Sc.sgd.db, keytype = "ORF")
+  allaliases <- keys(org.Sc.sgd.db, keytype = "ALIAS")
+  
+  genenameorfmap <- AnnotationDbi::select(org.Sc.sgd.db, keys = allgenenames, keytype = "GENENAME", columns = c("GENENAME", "ORF"))
+  aliasorfmap <- AnnotationDbi::select(org.Sc.sgd.db, keys = allstrainnames, keytype = "ALIAS", columns = c("ALIAS", "ORF"))
+  
+  strainorfmap <- data.frame(Strain=allstrainnames, ORF=NA)
+  
+  for(strain in allstrainnames){
+    
+    mapmethod <- ""
+    orf <- c()
+    
+    # If strain name is in gene names, look up its ORF
+    if(strain %in% genenameorfmap$GENENAME){
+      orf <- na.omit(genenameorfmap[genenameorfmap$GENENAME==strain,"ORF"][1])  # 1-to-1 mapping exists for each strain name
+      mapmethod <- "Gene name to ORF"
+    }
+    else if(strain %in% allorfs){  # Keep the gene name as-is
+      orf <- strain
+      mapmethod <- "ORF to ORF"
+    }
+    # If strain is not in gene names but it is in aliases, get ORF
+    else if(strain %in% aliasorfmap$ALIAS){
+      orf <- na.omit(aliasorfmap[aliasorfmap$ALIAS==strain,"ORF"])  # 1-to-many mapping exists here
+      mapmethod <- "Gene alias to ORF"
+    }
+    
+    if(length(orf)==1){
+      strainorfmap[strainorfmap$Strain==strain,"ORF"] <- orf
+      # message("Mapping method for ", strain, " to ", orf, ": ", mapmethod)
+    }
+    else if(length(orf)>1){
+      message("ERROR: Found multiple ORFs for strain ", strain)
+      stop(0)
+    }
+  }
+  
+  # Need to manually assign some deleteome strain names to their ORFs
+  strainorfmap[strainorfmap$Strain=="ARG5_6","ORF"] <- "YER069W"
+  strainorfmap[strainorfmap$Strain=="CYCC","ORF"] <- "YNL025C"  # SSN8
+  strainorfmap[strainorfmap$Strain=="MF_ALPHA_1","ORF"] <- "YPL187W"
+  strainorfmap[strainorfmap$Strain=="MF_ALPHA_2","ORF"] <- "YGL089C"
+  strainorfmap[strainorfmap$Strain=="YAL044W_A","ORF"] <- "YAL044W-A"
+  strainorfmap[strainorfmap$Strain=="YDR034W_B","ORF"] <- "YDR034W-B"
+  strainorfmap[strainorfmap$Strain=="YIL014C_A","ORF"] <- "YIL014C-A"
+  strainorfmap[strainorfmap$Strain=="YOL086W_A","ORF"] <- "YOL086W-A"
+  
+  # Note that the strain names WT_BY4743, WT_MATA, and WT_YPD will have ORF column values of <NA>
+  # add will be omitted in the GO analysis
+  
   genes <- toupper(genes)
   
-  message("Performing GO enrichment tests")
+  # Give warning if we couldn't find an associated ORF for a gene name
+  for(i in 1:dim(strainorfmap)[1]){
+    thestrain <- strainorfmap[i,"Strain"]
+    if(is.na(strainorfmap[i,"ORF"]) & thestrain %in% genes){
+      genes <- genes[genes != thestrain]  # Remove from analysis
+      message("WARNING: Could not find ORF for strain ", strainorfmap[i,"Strain"], ". Removed from GO analysis.")
+    }
+  }
+  
+  orfs <- unique(strainorfmap[strainorfmap$Strain %in% genes, "ORF"])
   
   if(useDeleteomeBackground){
-    bg <- toupper(getAllStrainNames(delData))
-    xGOUni <- enrichGO(genes, pvalueCutoff = padjthresh, minGSSize = 2, OrgDb=org.Sc.sgd.db::org.Sc.sgd.db, keyType = "GENENAME", pAdjustMethod = "BH", universe = bg, ont="ALL")
+    allstrainorfs <- as.character(na.omit(unique(strainorfmap$ORF)))
+    xGOUni <- enrichGO(orfs, pvalueCutoff = padjthresh, minGSSize = 2, OrgDb=org.Sc.sgd.db::org.Sc.sgd.db, keyType = "ORF", pAdjustMethod = "BH", universe = allstrainorfs, ont="ALL")
   }
   else{
-    xGOUni <- enrichGO(genes, pvalueCutoff = padjthresh, minGSSize = 2, OrgDb=org.Sc.sgd.db::org.Sc.sgd.db, keyType = "GENENAME", pAdjustMethod = "BH", ont="ALL")
+    xGOUni <- enrichGO(orfs, pvalueCutoff = padjthresh, minGSSize = 2, OrgDb=org.Sc.sgd.db::org.Sc.sgd.db, keyType = "ORF", pAdjustMethod = "BH", ont="ALL")
   }
   detach("package:clusterProfiler", unload=TRUE)
   return(xGOUni[,])
@@ -288,6 +353,7 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
                                         pthreshForTitle=NA,    # P-value threhshold used to get the mutant strain's signature. Only used in heatmap title and file name.
                                         quantileForTitle=NA,   # Percentile threshold used to select similar strains. Only used in heatmap title and file name.
                                         subteloGenesOnly=F,    # Whether to only include subtelomeric genes in the rows of the heatmap
+                                        clusterColumns=T,      # Whether to automatically cluster the columns of the heatmap
                                         colFontSize=1,         # Font size for column labels
                                         showRowLabels=F,       # Whether to show row labels
                                         rowFontSize=0.275,     # Font size for row labels
@@ -350,7 +416,7 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
   mycolnamesdeltaitalic <- lapply(mycolnamesdeltaitalic, function(x) bquote(italic(.(x)*Delta)))
   
   # Make the heatmap object
-  clust <- heatmap.2(mybigmat, Colv = T, trace = "none", symbreaks = T, 
+  clust <- heatmap.2(mybigmat, Colv = clusterColumns, trace = "none", symbreaks = T, 
                      xlab = "Deletion strain", ylab = bquote(.(rowtitleprefix)*" in "*italic(.(mutantname)*Delta)*" signature"),
                      labRow = rowlabels,
                      labCol = as.expression(mycolnamesdeltaitalic),
@@ -574,7 +640,7 @@ getDeleteomeMatchesByReciprocalCorrelation = function(delData=NA,          # Ful
   
   pvalcutoff <- quantile(allSigCorrResults$Pvalue.FDR, quantileCutoff) # get mutants with p-values that were in the desired quantile
   
-  allSigCorrResults <- allSigCorrResults[allSigCorrResults$Pvalue.FDR < pvalcutoff,]
+  allSigCorrResults <- allSigCorrResults[allSigCorrResults$Pvalue.FDR <= pvalcutoff & allSigCorrResults$Pvalue.FDR <= pCutoff,]
   allSigCorrResults <- allSigCorrResults[order(allSigCorrResults$CorrCoefficient,decreasing=T),]
   
   # for each signifcantly correlated deletion strain, see if reciprocal correlation is also significant
