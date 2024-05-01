@@ -9,15 +9,17 @@ alldata <- getDeleteomeExpData() # Load all the deleteome expression data
 
 mutantname <- "nup170" # The tool will find mutant strains transcriptionally similar to the strain specified here
 
-Mthresh <- 0 # log2 fold-change cutoff for identifying differentially-expressed genes in deletion strain
-pthresh <- 0.05 # p-value cutoff for identifying differentially-expressed genes in deletion strain
+Mthresh <- 0.0 # log2 fold-change cutoff for identifying differentially-expressed genes in deletion strain
+pDEGs <- 0.05 # p-value cutoff for identifying differentially-expressed genes in deletion strain
+pEnrich <- 0.05  # p-value cutoff for identifying statistically-significant correlation tests
 qthresh <- 0.05 # quantile cutoff for selecting similar deletion strains
 
 # Find similar strains in Deleteome
 matchingStrains <- getDeleteomeMatchesByEnrichment(   delData = alldata,
                                                       mutant=mutantname, 
                                                       minAbsLog2FC = Mthresh, 
-                                                      pCutoff = pthresh, 
+                                                      pDEGs = pDEGs,
+                                                      pEnrich = pEnrich,
                                                       quantileCutoff = qthresh
                                                       )
 
@@ -26,12 +28,11 @@ message("\nSimilar mutant strains:")
 print(matchingStrains)
 
 # Generate heatmap for significantly correlated deleteome mutants
-# First get a data frame that contains all the log2 fold-change and p-value info for the mutant strain 
-# (AKA its "profile")
+# First get a data frame that contains all the log2 fold-change and p-value info for the mutant strain (AKA its "profile")
 mutantProfile <- getProfileForDeletion(delData = alldata, 
                                        deletionname = mutantname, 
                                        Mthresh = Mthresh, 
-                                       pthresh = pthresh)
+                                       pDEGs = pDEGs)
 
 # Generate heatmap for significantly similar deleteome profiles
 hm1 <- makeHeatmapDeleteomeMatches(mutantname = mutantname, 
@@ -40,7 +41,8 @@ hm1 <- makeHeatmapDeleteomeMatches(mutantname = mutantname,
                                    fileprefix = "HyperG_matches", 
                                    titledesc="transcriptional similarity (signature enrichment)", 
                                    MthreshForTitle = Mthresh, 
-                                   pthreshForTitle = pthresh, 
+                                   pDEGsForTitle = pDEGs,
+                                   pMatchesForTitle = pEnrich,
                                    quantileForTitle = qthresh,
                                    imagewidth = 5000,
                                    printToFile = T)
@@ -54,7 +56,8 @@ hm2 <- makeHeatmapDeleteomeMatches(mutantname = mutantname,
                                    fileprefix = "HyperG_matches_subtelo", 
                                    titledesc="transcriptional similarity (signature enrichment)", 
                                    MthreshForTitle = Mthresh, 
-                                   pthreshForTitle = pthresh, 
+                                   pDEGsForTitle = pDEGs,
+                                   pMatchesForTitle = pEnrich,
                                    quantileForTitle = qthresh,
                                    subteloGenesOnly = T, 
                                    imagewidth = 5000,
@@ -67,25 +70,28 @@ hm3 <- makeHeatmapDeleteomeMatches(mutantname = mutantname,
                                    fileprefix = "Specific_mutants", 
                                    titledesc="manual selection", 
                                    MthreshForTitle = Mthresh, 
-                                   pthreshForTitle = pthresh, 
+                                   pDEGsForTitle = pDEGs,
+                                   pMatchesForTitle = pEnrich,
                                    quantileForTitle = qthresh,
-                                   imagewidth = 2000,
+                                   imagewidth = 2550,
                                    printToFile = T)
 
 
 # Make a mountain lake plot (this also reports subtelomeric enrichment p-values for the mutant's up- and down-regulated genes)
 makeGenomicPositionHistogram(delData = alldata, 
                              mutant = mutantname, 
-                             Mthresh = Mthresh, 
+                             Mthresh = Mthresh,
+                             pDEGs = pDEGs,
                              xmax=770, ymax = 40, 
                              upcolor="#d53e4f", 
                              downcolor="#3288bd")
+
 
 # Run GO enrichment on similar mutants
 GOpadjcutoff = 0.05
 GO <- doGOenrichmentOnDeleteomeMatches(delData = alldata, 
                                        genes = matchingStrains, 
                                        padjthresh = GOpadjcutoff)
-GOoutputfile <- paste0(scriptloc,"/output/GO_enrichment/",mutantname,"_GOenrichmentResults_HyperG_GOpadj",GOpadjcutoff,".tsv")
-write.table(GO,file=GOoutputfile, sep="\t", quote = F, row.names = F)
+GOoutputfile <- paste0(scriptloc,"/output/GO_enrichment/", mutantname, "_GOenrichmentResults_HyperG_GOpadj", GOpadjcutoff,".tsv")
+write.table(GO, file=GOoutputfile, sep="\t", quote = F, row.names = F)
 message("Wrote GO enrichment results to ", GOoutputfile)

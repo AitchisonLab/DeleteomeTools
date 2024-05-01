@@ -37,7 +37,7 @@ getDeleteomeExpData <- function(folder="") {  # folder: parent folder containing
 getProfileForDeletion <- function(delData,           # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
                                   deletionname,      # Name of deletion as string
                                   Mthresh,           # The absolute log2 fold-change threshold when selecting differentially-expressed genes (use 0 to include all genes)
-                                  pthresh,           # The p-value threshold to use when selecting differentially-expressed genes (use 1 to include all genes)
+                                  pDEGs,           # The p-value threshold to use when selecting differentially-expressed genes (use 1 to include all genes)
                                   consoleMessages=T  # Whether to output console messages
                                   ){
 
@@ -50,7 +50,7 @@ getProfileForDeletion <- function(delData,           # Full Deleteome expression
   pcolname <- paste0(deletionname,"_del_vs_wt_2")
   
   if(Mcolname %in% names(delData) & pcolname %in% names(delData)){
-    selected <- delData[abs(as.numeric(delData[,Mcolname]))>=Mthresh & as.numeric(delData[,pcolname])<=pthresh,c("systematicName","geneSymbol",Mcolname,pcolname)]
+    selected <- delData[abs(as.numeric(delData[,Mcolname]))>=Mthresh & as.numeric(delData[,pcolname])<=pDEGs,c("systematicName","geneSymbol",Mcolname,pcolname)]
     selected <- selected[selected$geneSymbol!=toupper(deletionname),]
     selected[,3] <- as.numeric(selected[,3])
     selected[,4] <- as.numeric(selected[,4])
@@ -261,59 +261,9 @@ doGOenrichmentOnDeleteomeMatches <- function(delData,                     # Full
   message("Performing GO enrichment tests")
   
   suppressMessages(suppressWarnings(require(clusterProfiler)))
-  require(org.Sc.sgd.db)
   require(clusterProfiler)
   
-  allstrainnames <- toupper(getAllStrainNames(delData))
-  
-  allgenenames <- keys(org.Sc.sgd.db, keytype = "GENENAME")
-  allorfs <- keys(org.Sc.sgd.db, keytype = "ORF")
-  allaliases <- keys(org.Sc.sgd.db, keytype = "ALIAS")
-  
-  genenameorfmap <- AnnotationDbi::select(org.Sc.sgd.db, keys = allgenenames, keytype = "GENENAME", columns = c("GENENAME", "ORF"))
-  aliasorfmap <- AnnotationDbi::select(org.Sc.sgd.db, keys = allstrainnames, keytype = "ALIAS", columns = c("ALIAS", "ORF"))
-  
-  strainorfmap <- data.frame(Strain=allstrainnames, ORF=NA)
-  
-  for(strain in allstrainnames){
-    
-    mapmethod <- ""
-    orf <- c()
-    
-    # If strain name is in gene names, look up its ORF
-    if(strain %in% genenameorfmap$GENENAME){
-      orf <- na.omit(genenameorfmap[genenameorfmap$GENENAME==strain,"ORF"][1])  # 1-to-1 mapping exists for each strain name
-      mapmethod <- "Gene name to ORF"
-    }
-    else if(strain %in% allorfs){  # Keep the gene name as-is
-      orf <- strain
-      mapmethod <- "ORF to ORF"
-    }
-    # If strain is not in gene names but it is in aliases, get ORF
-    else if(strain %in% aliasorfmap$ALIAS){
-      orf <- na.omit(aliasorfmap[aliasorfmap$ALIAS==strain,"ORF"])  # 1-to-many mapping exists here
-      mapmethod <- "Gene alias to ORF"
-    }
-    
-    if(length(orf)==1){
-      strainorfmap[strainorfmap$Strain==strain,"ORF"] <- orf
-      # message("Mapping method for ", strain, " to ", orf, ": ", mapmethod)
-    }
-    else if(length(orf)>1){
-      message("ERROR: Found multiple ORFs for strain ", strain)
-      stop(0)
-    }
-  }
-  
-  # Need to manually assign some deleteome strain names to their ORFs
-  strainorfmap[strainorfmap$Strain=="ARG5_6","ORF"] <- "YER069W"
-  strainorfmap[strainorfmap$Strain=="CYCC","ORF"] <- "YNL025C"  # SSN8
-  strainorfmap[strainorfmap$Strain=="MF_ALPHA_1","ORF"] <- "YPL187W"
-  strainorfmap[strainorfmap$Strain=="MF_ALPHA_2","ORF"] <- "YGL089C"
-  strainorfmap[strainorfmap$Strain=="YAL044W_A","ORF"] <- "YAL044W-A"
-  strainorfmap[strainorfmap$Strain=="YDR034W_B","ORF"] <- "YDR034W-B"
-  strainorfmap[strainorfmap$Strain=="YIL014C_A","ORF"] <- "YIL014C-A"
-  strainorfmap[strainorfmap$Strain=="YOL086W_A","ORF"] <- "YOL086W-A"
+  strainorfmap <- getStrainNameORFmap(delData)
   
   # Note that the strain names WT_BY4743, WT_MATA, and WT_YPD will have ORF column values of <NA>
   # add will be omitted in the GO analysis
@@ -333,10 +283,10 @@ doGOenrichmentOnDeleteomeMatches <- function(delData,                     # Full
   
   if(useDeleteomeBackground){
     allstrainorfs <- as.character(na.omit(unique(strainorfmap$ORF)))
-    xGOUni <- enrichGO(orfs, pvalueCutoff = padjthresh, minGSSize = 2, OrgDb=org.Sc.sgd.db::org.Sc.sgd.db, keyType = "ORF", pAdjustMethod = "BH", universe = allstrainorfs, ont="ALL")
+    xGOUni <- enrichGO(orfs, pvalueCutoff = padjthresh, minGSSize = 1, OrgDb=org.Sc.sgd.db::org.Sc.sgd.db, keyType = "ORF", pAdjustMethod = "BH", universe = allstrainorfs, ont="ALL")
   }
   else{
-    xGOUni <- enrichGO(orfs, pvalueCutoff = padjthresh, minGSSize = 2, OrgDb=org.Sc.sgd.db::org.Sc.sgd.db, keyType = "ORF", pAdjustMethod = "BH", ont="ALL")
+    xGOUni <- enrichGO(orfs, pvalueCutoff = padjthresh, minGSSize = 1, OrgDb=org.Sc.sgd.db::org.Sc.sgd.db, keyType = "ORF", pAdjustMethod = "BH", ont="ALL")
   }
   detach("package:clusterProfiler", unload=TRUE)
   return(xGOUni[,])
@@ -344,22 +294,23 @@ doGOenrichmentOnDeleteomeMatches <- function(delData,                     # Full
 
 
 # Make a heatmap showing expression profiles of matched mutants
-makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletion strain (used for plot titles and file names)
-                                        mutantProfile=NA,      # Gene expression signature for deletion strain (can be obtained using getProfileForDeletion())
-                                        selectedConditions=NA, # List of additional Deleteome strains to include in heatmap
-                                        fileprefix=NA,         # String that can be added to beginning of heatmap file name. Appears after mutant name.
-                                        titledesc="",          # Rationale for inclusion of additional strains in heatmap. Used in title of heatmap.
-                                        MthreshForTitle=NA,    # Log2 fold-change threshold used to get the mutant strain's signature. Only used in heatmap title and file name.
-                                        pthreshForTitle=NA,    # P-value threhshold used to get the mutant strain's signature. Only used in heatmap title and file name.
-                                        quantileForTitle=NA,   # Percentile threshold used to select similar strains. Only used in heatmap title and file name.
-                                        subteloGenesOnly=F,    # Whether to only include subtelomeric genes in the rows of the heatmap
-                                        clusterColumns=T,      # Whether to automatically cluster the columns of the heatmap
-                                        colFontSize=1,         # Font size for column labels
-                                        showRowLabels=F,       # Whether to show row labels
-                                        rowFontSize=0.275,     # Font size for row labels
-                                        imagewidth=3000,       # If writing to file, the Width of the saved image in pixels
-                                        imageheight=2400,      # If writing to file, the Width of the saved image in pixels
-                                        printToFile=T          # Whether to write heatmap to a file or show in new window
+makeHeatmapDeleteomeMatches <- function(mutantname=NA,             # Name of deletion strain (used for plot titles and file names)
+                                        mutantProfile=NA,          # Gene expression signature for deletion strain (can be obtained using getProfileForDeletion())
+                                        selectedConditions=NA,     # List of additional Deleteome strains to include in heatmap
+                                        fileprefix=NA,             # String that can be added to beginning of heatmap file name. Appears after mutant name.
+                                        titledesc="",              # Rationale for inclusion of additional strains in heatmap. Used in title of heatmap.
+                                        MthreshForTitle=NA,        # Log2 fold-change threshold used to get the mutant strain's signature. Only used in heatmap title and file name.
+                                        pDEGsForTitle=NA,          # P-value threhshold used to get the mutant strain's signature. Only used in heatmap title and file name.
+                                        pMatchesForTitle=NA,       # P-value threshold used to select similar mutant strains
+                                        quantileForTitle=NA,       # Quantile threshold used to select similar strains. Only used in heatmap title and file name.
+                                        subteloGenesOnly=F,        # Whether to only include subtelomeric genes in the rows of the heatmap
+                                        clusterColumns=T,          # Whether to automatically cluster the columns of the heatmap
+                                        colFontSize=1,             # Font size for column labels
+                                        showRowLabels=F,           # Whether to show row labels
+                                        rowFontSize=0.275,         # Font size for row labels
+                                        imagewidth=3000,           # If writing to file, the Width of the saved image in pixels
+                                        imageheight=2400,          # If writing to file, the Width of the saved image in pixels
+                                        printToFile=T              # Whether to write heatmap to a file or show in new window
                                         ){
   # Make heatmap comparing all significantly matched mutants to mutant of interest
   genesThatCanBeCompared <- mutantProfile[ ! mutantProfile$geneSymbol %in% toupper(selectedConditions),]  # Omit mutantname from list of similar mutants
@@ -393,8 +344,8 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
   mybreaks <- seq(-1.5, 1.5, length.out=101)
   
   if(printToFile){
-    hmfile <- paste0(thedir, "/output/heatmaps/",mutantname,"_",fileprefix,"_Heatmap_l2FC",MthreshForTitle,"_p",
-                      pthreshForTitle,"_quantile",quantileForTitle,".jpg")
+    hmfile <- paste0(thedir, "/output/heatmaps/",mutantname,"_",fileprefix,"_Heatmap_l2FC",MthreshForTitle,"_pDEGs",
+                      pDEGsForTitle, "_pMatches",pMatchesForTitle,"_quantile",quantileForTitle,".jpg")
     jpeg(file = hmfile, 
             width=imagewidth, height = imageheight, res=300, units="px")
   }
@@ -432,8 +383,8 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,         # Name of deletio
                      key.title= "",
                      keysize = 1,
                      key.xlab = "Log2 fold-change vs. WT",
-                     main = bquote(atop("Expression for "*italic(.(mutantname)*Delta)*" and other strains included based on "*.(titledesc), 
-                                                "Log2 fold-change cutoff: "*.(MthreshForTitle)*", FDR P-value cutoff: "*.(pthreshForTitle)*", Quantile cutoff: "*.(quantileForTitle)))
+                     main = bquote(atop("Expression for "*italic(.(mutantname)*Delta)*" and other strains included by "*.(titledesc), 
+                                        Cutoffs*": Abs. "*log[2]~fold*"-"*change*">="*.(MthreshForTitle)*", "*DEG~italic("P-")*value*"="*.(pDEGsForTitle)*", "*Similarity~italic("P-")*value*"="*.(pMatchesForTitle)*", "*Quantile*"="*.(quantileForTitle)))
                      )
   
   if(printToFile){ 
@@ -452,7 +403,7 @@ makeGenomicPositionHistogram <- function(delData=NULL,           # Full Deleteom
                                          relativeTo="telomere",  # can be "telomere" or "centromere"
                                          rangeInKB=25,           # Window (in kilobases) for defining a gene as either in the telomeric or centromeric region
                                          Mthresh=0,              # Log2 fold-change threshold for defining differentially-expressed genes
-                                         pthresh=0.05,           # P-value threshold for defining differentially-expressed genes
+                                         pDEGs=0.05,             # P-value threshold for defining differentially-expressed genes
                                          xmax=500,               # X-axis maximum
                                          ymax=50,                # Y-axis maximum
                                          upcolor="red",          # Color to use for upregulated genes
@@ -487,7 +438,7 @@ makeGenomicPositionHistogram <- function(delData=NULL,           # Full Deleteom
   # Use the following to show VdVFig3 plots of selected mutants
   allDF <- genePositions[,relativeToCol]/1000 # get all distance from telomere numbers; filter out mitochondrial genes? If so: genePositions$Chr != 'Mito'
 
-  mutantProfile <- getProfileForDeletion(delData, mutant, Mthresh, pthresh, consoleMessages = F)
+  mutantProfile <- getProfileForDeletion(delData, mutant, Mthresh, pDEGs, consoleMessages = F)
   
   profileUP <- mutantProfile[mutantProfile[,3] > Mthresh, ]
   profileDOWN <- mutantProfile[mutantProfile[,3] <= -Mthresh, ]
@@ -566,13 +517,16 @@ makeGenomicPositionHistogram <- function(delData=NULL,           # Full Deleteom
 }
 
 # Find mutants with similar expression profiles using hypergeometric enrichment tests
-getDeleteomeMatchesByReciprocalCorrelation = function(delData=NA,          # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
-                                                      mutant=NA,           # Name of Deleteome strain to analyze
-                                                      minAbsLog2FC=0,      # Log2 fold-change cutoff used to classify genes as differentially expressed 
-                                                                           #   (absolute value of log2 fold-change must be higher than minAbsLog2FC)
-                                                      pCutoff=0.05,        # P-value cutoff used to identify differentially-expressed genes
-                                                      quantileCutoff=0.05, # Quantile cutoff for selecting the Deleteome matches with highest confidence
-                                                      showMessages = F     # Whether to output progress messages
+getDeleteomeMatchesByReciprocalCorrelation = function(delData=NA,            # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
+                                                      mutant=NA,             # Name of Deleteome strain to analyze
+                                                      minAbsLog2FC=0,        # Log2 fold-change cutoff used to classify genes as differentially expressed 
+                                                                             #   (absolute value of log2 fold-change must be higher than minAbsLog2FC)
+                                                      pDEGs=0.05,            # P-value cutoff used to identify differentially-expressed genes
+                                                      pCor=0.05,             # P-value cutoff used to identify statisitally significant correlation tests
+                                                      quantileCutoff=0.05,   # Quantile cutoff for selecting the Deleteome matches with highest confidence
+                                                      returnTestValues=F,    # If true, a data frame containing the correlation test results against each similar 
+                                                                             # Deleteome mutant is returned. If false, only the names of the similar mutants are returned.
+                                                      showMessages = F       # Whether to output progress messages
                                                       ){
   
   message("Getting deleteome matches by reciprocal correlation...")
@@ -588,7 +542,7 @@ getDeleteomeMatchesByReciprocalCorrelation = function(delData=NA,          # Ful
   }
   
   # Get the query strain's profile (signature)
-  mutantProfile <- getProfileForDeletion(delData, mutant, minAbsLog2FC, pCutoff, consoleMessages = showMessages)
+  mutantProfile <- getProfileForDeletion(delData, mutant, minAbsLog2FC, pDEGs, consoleMessages = showMessages)
   
   if(dim(mutantProfile)[1]==0){
     message(c(mutant," had no significantly changed genes, based on M-value and p-value thresholds"))
@@ -635,13 +589,20 @@ getDeleteomeMatchesByReciprocalCorrelation = function(delData=NA,          # Ful
   allCorrResultsNoNA$Pvalue <- as.numeric(allCorrResultsNoNA$Pvalue)
   allCorrResultsNoNA$Pvalue.FDR <- as.numeric(allCorrResultsNoNA$Pvalue.FDR)
   
+  allSigCorrResults <- allCorrResultsNoNA[allCorrResultsNoNA$CorrCoefficient > 0, ] # limit to positive correlations
   
-  allSigCorrResults <- allCorrResultsNoNA[allCorrResultsNoNA$CorrCoefficient > 0,] # limit to positive correlations
+  # Add quantile level for FDR-adjusted p-values
+  if(dim(allSigCorrResults)[1] > 0){
+    cdf <- ecdf(allSigCorrResults$Pvalue.FDR)
+    allSigCorrResults$Pvalue.FDR.quantile <- cdf(allSigCorrResults$Pvalue.FDR)  
+  }
+  else allSigCorrResults$Pvalue.FDR.quantile <- numeric(0)
   
-  pvalcutoff <- quantile(allSigCorrResults$Pvalue.FDR, quantileCutoff) # get mutants with p-values that were in the desired quantile
+  pvalcutoff <- quantile(allSigCorrResults$Pvalue.FDR, quantileCutoff, type = 1) # get mutants with p-values that were in the desired quantile
+  message("Quantile-based FDR P-value cutoff set to ", pvalcutoff)
   
-  allSigCorrResults <- allSigCorrResults[allSigCorrResults$Pvalue.FDR <= pvalcutoff & allSigCorrResults$Pvalue.FDR <= pCutoff,]
-  allSigCorrResults <- allSigCorrResults[order(allSigCorrResults$CorrCoefficient,decreasing=T),]
+  allSigCorrResults <- allSigCorrResults[allSigCorrResults$Pvalue.FDR < pvalcutoff & allSigCorrResults$Pvalue.FDR < pCor,]  
+  allSigCorrResults <- allSigCorrResults[order(allSigCorrResults$CorrCoefficient, decreasing=T),]
   
   # for each signifcantly correlated deletion strain, see if reciprocal correlation is also significant
   allRecipCorrResults = data.frame(matrix(ncol=3, nrow=length(allSigCorrResults$Deletion)))
@@ -652,7 +613,7 @@ getDeleteomeMatchesByReciprocalCorrelation = function(delData=NA,          # Ful
   mutantProfileANY <- getProfileForDeletion(delData, mutant, 0, 1, consoleMessages = showMessages)
   for(cond in allSigCorrResults$Deletion){
     
-    condprofile <- getProfileForDeletion(delData, cond, minAbsLog2FC, pCutoff, consoleMessages = showMessages)
+    condprofile <- getProfileForDeletion(delData, cond, minAbsLog2FC, pDEGs, consoleMessages = showMessages)
     
     intrsct <- intersect(mutantProfileANY$systematicName,condprofile$systematicName) # need to do this b/c condition profile won't include the KO'd gene, which might be in the mutant's profile
     
@@ -665,33 +626,41 @@ getDeleteomeMatchesByReciprocalCorrelation = function(delData=NA,          # Ful
       Rval <- NA
       pval <- NA
     }
-    allRecipCorrResults[m,] <- c(cond,Rval,pval)
+    allRecipCorrResults[m,] <- c(cond, Rval, pval)
     m = m + 1
   }
-  
   
   allRecipCorrResults$Pvalue.FDR <- p.adjust(allRecipCorrResults$Pvalue, method="BH")
   allRecipCorrResultsNoNA <- na.omit(allRecipCorrResults)
   
   # Find overlap between direct and reciprocal correlations. Limit results to significant, positive reciprocal correlations.
-  allSigRecipCorrResults <- allRecipCorrResultsNoNA[as.numeric(allRecipCorrResultsNoNA$Pvalue.FDR) <= pCutoff & allRecipCorrResultsNoNA$CorrCoefficient > 0,]  
+  allSigRecipCorrResults <- allRecipCorrResultsNoNA[as.numeric(allRecipCorrResultsNoNA$Pvalue.FDR) < pCor & 
+                                                      allRecipCorrResultsNoNA$CorrCoefficient > 0,]  
   
   sigDirectRecipCorrNames <- intersect(allSigRecipCorrResults$Deletion, allSigCorrResults$Deletion) # get all KO's that had significant direct and reciprocal correlations
   sigDirectRecipCorrResults <- allSigCorrResults[allSigCorrResults$Deletion %in% sigDirectRecipCorrNames,]
   sigDirectRecipCorrResults <- sigDirectRecipCorrResults[order(sigDirectRecipCorrResults$CorrCoefficient, decreasing=T),] # sort by direct correlation Rval
   
-  similarStrains <- sigDirectRecipCorrResults[sigDirectRecipCorrResults$Deletion != mutant,"Deletion"]
   
-  outputfilename <- paste0(thedir, "/output/mutant_similarity/",mutant,"_sigCorr_L2FC",minAbsLog2FC,"_Pcutoff",pCutoff,"_quantile",quantileCutoff,".tsv")
-  write.table(sigDirectRecipCorrResults[sigDirectRecipCorrResults$Deletion != mutant, c("Deletion","CorrCoefficient","Pvalue","Pvalue.FDR")], 
-            outputfilename, row.names = F, col.names = T, sep="\t", quote=F)
+  outputfilename <- paste0(thedir, "/output/mutant_similarity/", mutant, "_sigCorr_L2FC", minAbsLog2FC, "_pDEGs", pDEGs, "_pCor", pCor, "_quantile",quantileCutoff,".tsv")
+  
+  resultsToOutput <- sigDirectRecipCorrResults[sigDirectRecipCorrResults$Deletion != mutant, 
+                                               c("Deletion", "CorrCoefficient", "Pvalue", "Pvalue.FDR", "Pvalue.FDR.quantile")]
+  similarStrains <- resultsToOutput$Deletion
+  
+  write.table(resultsToOutput, outputfilename, row.names = F, col.names = T, sep="\t", quote=F)
   message("Results written to ", outputfilename)
   
   if(length(similarStrains)==0){
     message("Could not find any deletion mutants with signatures that significantly overlapped with ", mutant, " deletion")
   }
   
-  return(similarStrains) # Returns list of Deleteome strains matching the input strain
+  if(returnTestValues){
+    return(resultsToOutput)
+  }
+  else{
+    return(similarStrains) # Returns list of Deleteome strains matching the input strain
+  }
 }
 
 
@@ -699,7 +668,8 @@ getDeleteomeMatchesByReciprocalCorrelation = function(delData=NA,          # Ful
 getDeleteomeMatchesByEnrichment <- function(mutant=NA,           # Name of Deleteome strain to analyze
                                             minAbsLog2FC=0,      # Log2 fold-change cutoff used to classify genes as differentially expressed 
                                                                  #   (absolute value of log2 fold-change must be higher than minAbsLog2FC)
-                                            pCutoff=0.05,        # P-value cutoff used to identify differentially-expressed genes
+                                            pDEGs=0.05,           # P-value cutoff used to identify differentially-expressed genes
+                                            pEnrich=0.05,        # P-value cutoff used to identify statistically significant enrichment tests
                                             quantileCutoff=0.05, # Quantile cutoff for selecting the Deleteome matches with highest confidence
                                             delData=NA,          # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
                                             showMessages = F     # Whether to output progress messages
@@ -727,7 +697,7 @@ getDeleteomeMatchesByEnrichment <- function(mutant=NA,           # Name of Delet
   ndeleteomegenes <- length(getProfileForDeletion(alldata, mutant, 0, 1, consoleMessages = showMessages)$systematicName)
   
   # Get signature for query strain
-  mutantprofile <- getProfileForDeletion(alldata, mutant, minAbsLog2FC, pCutoff, consoleMessages = showMessages)
+  mutantprofile <- getProfileForDeletion(alldata, mutant, minAbsLog2FC, pDEGs, consoleMessages = showMessages)
   mutantprofileALL <- getProfileForDeletion(alldata, mutant, 0, 1.0, consoleMessages = showMessages)
   
   if(dim(mutantprofile)[1]==0){
@@ -742,7 +712,7 @@ getDeleteomeMatchesByEnrichment <- function(mutant=NA,           # Name of Delet
       next() # Skip the query strain and WT control experiments in the deleteome
     }
     
-    profile <- getProfileForDeletion(alldata,cond,minAbsLog2FC,pCutoff, consoleMessages = showMessages)
+    profile <- getProfileForDeletion(alldata, cond, minAbsLog2FC, pDEGs, consoleMessages = showMessages)
     profileint <- computeDirectionalMatches(profile,mutantprofile)
     
     samplesuccesses <- length(profileint[profileint$samedir>0,"systematicName"])
@@ -762,8 +732,8 @@ getDeleteomeMatchesByEnrichment <- function(mutant=NA,           # Name of Delet
   
   hypergs$HyperGpvalFDR <- p.adjust(hypergs$HyperGpval, method = "BH")
   
-  fivepctcutoff <- quantile(hypergs$HyperGpvalFDR, quantileCutoff) # make sure that we are only using the top X% of p-values
-  sighypergs <- hypergs[hypergs$HyperGpvalFDR<=pCutoff & hypergs$HyperGpvalFDR<=fivepctcutoff,] # X% cutoff and must meet significance criteria
+  pctcutoff <- quantile(hypergs$HyperGpvalFDR, quantileCutoff) # make sure that we are only using the top X% of p-values
+  sighypergs <- hypergs[hypergs$HyperGpvalFDR <= pEnrich & hypergs$HyperGpvalFDR <= pctcutoff,] # X% cutoff and must meet significance criteria
   
   similarStrains <- sighypergs[order(sighypergs$HyperGpvalFDR,decreasing=F),"Condition"] 
   
@@ -773,7 +743,7 @@ getDeleteomeMatchesByEnrichment <- function(mutant=NA,           # Name of Delet
   }
   
   sigresults <- sighypergs[order(sighypergs$HyperGpvalFDR,decreasing=F),1:3]
-  sigresultsfile <- paste0(thedir, "/output/mutant_similarity/", mutant, "_sigHyperG_L2FC",minAbsLog2FC,"_Pcutoff",pCutoff,"_quantile",quantileCutoff,".tsv")
+  sigresultsfile <- paste0(thedir, "/output/mutant_similarity/", mutant, "_sigHyperG_L2FC",minAbsLog2FC,"_pDEGs",pDEGs,"_pEnrich",pEnrich,"_quantile",quantileCutoff,".tsv")
   write.table(sigresults, file = sigresultsfile, sep="\t", quote=F, row.names = F, col.names = T)
   message("Results written to ", sigresultsfile)
   
@@ -796,4 +766,69 @@ computeDirectionalMatches <- function(profile1=NA, profile2=NA){
   profile1int$samedir <- profile1int$mvalsToMatch*profile1int[,3]
   
   return(profile1int)
+}
+
+
+# Getting mappings between Deleteome strain names and their ORFs
+# Returns a data frame with three columns (Strain, ORF, MappingType)
+getStrainNameORFmap <- function(delData){
+  
+  if( ! is.data.frame(delData)){
+    delData <- getCachedDeleteomeAll()
+  }
+  
+  require(org.Sc.sgd.db)
+  
+  allstrainnames <- toupper(getAllStrainNames(delData))
+  
+  allgenenames <- keys(org.Sc.sgd.db, keytype = "GENENAME")
+  allorfs <- keys(org.Sc.sgd.db, keytype = "ORF")
+  allaliases <- keys(org.Sc.sgd.db, keytype = "ALIAS")
+  
+  genenameorfmap <- AnnotationDbi::select(org.Sc.sgd.db, keys = allgenenames, keytype = "GENENAME", columns = c("GENENAME", "ORF"))
+  aliasorfmap <- AnnotationDbi::select(org.Sc.sgd.db, keys = allstrainnames, keytype = "ALIAS", columns = c("ALIAS", "ORF"))
+  
+  strainorfmap <- data.frame(Strain=allstrainnames, ORF=NA)
+  
+  for(strain in allstrainnames){
+    
+    mapmethod <- ""
+    orf <- c()
+    
+    # If strain name is in gene names, look up its ORF
+    if(strain %in% genenameorfmap$GENENAME){
+      orf <- na.omit(genenameorfmap[genenameorfmap$GENENAME==strain,"ORF"][1])  # 1-to-1 mapping exists for each strain name
+      mapmethod <- "Gene name to ORF"
+    }
+    else if(strain %in% allorfs){  # Keep the gene name as-is
+      orf <- strain
+      mapmethod <- "ORF to ORF"
+    }
+    # If strain is not in gene names but it is in aliases, get ORF
+    else if(strain %in% aliasorfmap$ALIAS){
+      orf <- na.omit(aliasorfmap[aliasorfmap$ALIAS==strain,"ORF"])  # 1-to-many mapping exists here
+      mapmethod <- "Gene alias to ORF"
+    }
+    
+    if(length(orf) == 1){ 
+      strainorfmap[strainorfmap$Strain==strain, "ORF"] <- orf
+      strainorfmap[strainorfmap$Strain==strain, "MappingType"] <- mapmethod
+    }
+    else if(length(orf) > 1){
+      message("ERROR: Found multiple ORFs for strain ", strain)
+      stop(0)
+    }
+  }
+  
+  # Need to manually assign some deleteome strain names to their ORFs
+  strainorfmap[strainorfmap$Strain=="ARG5_6","ORF"] <- "YER069W"
+  strainorfmap[strainorfmap$Strain=="CYCC","ORF"] <- "YNL025C"  # SSN8
+  strainorfmap[strainorfmap$Strain=="MF_ALPHA_1","ORF"] <- "YPL187W"
+  strainorfmap[strainorfmap$Strain=="MF_ALPHA_2","ORF"] <- "YGL089C"
+  strainorfmap[strainorfmap$Strain=="YAL044W_A","ORF"] <- "YAL044W-A"
+  strainorfmap[strainorfmap$Strain=="YDR034W_B","ORF"] <- "YDR034W-B"
+  strainorfmap[strainorfmap$Strain=="YIL014C_A","ORF"] <- "YIL014C-A"
+  strainorfmap[strainorfmap$Strain=="YOL086W_A","ORF"] <- "YOL086W-A"
+  
+  return(strainorfmap)
 }
