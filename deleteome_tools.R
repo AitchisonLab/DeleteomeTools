@@ -592,11 +592,7 @@ getDeleteomeMatchesByReciprocalCorrelation = function(delData=NA,            # F
   allSigCorrResults <- allCorrResultsNoNA[allCorrResultsNoNA$CorrCoefficient > 0, ] # limit to positive correlations
   
   # Add quantile level for FDR-adjusted p-values
-  if(dim(allSigCorrResults)[1] > 0){
-    cdf <- ecdf(allSigCorrResults$Pvalue.FDR)
-    allSigCorrResults$Pvalue.FDR.quantile <- cdf(allSigCorrResults$Pvalue.FDR)  
-  }
-  else allSigCorrResults$Pvalue.FDR.quantile <- numeric(0)
+  allSigCorrResults <- addQuantileLevel(allSigCorrResults)
   
   pvalcutoff <- quantile(allSigCorrResults$Pvalue.FDR, quantileCutoff, type = 1) # get mutants with p-values that were in the desired quantile
   message("Quantile-based FDR P-value cutoff set to ", pvalcutoff)
@@ -672,6 +668,8 @@ getDeleteomeMatchesByEnrichment <- function(mutant=NA,           # Name of Delet
                                             pEnrich=0.05,        # P-value cutoff used to identify statistically significant enrichment tests
                                             quantileCutoff=0.05, # Quantile cutoff for selecting the Deleteome matches with highest confidence
                                             delData=NA,          # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
+                                            returnTestValues=F,  # If true, a data frame containing the correlation test results against each similar 
+                                                                 # Deleteome mutant is returned. If false, only the names of the similar mutants are returned.
                                             showMessages = F     # Whether to output progress messages
                                             ){
   
@@ -682,7 +680,7 @@ getDeleteomeMatchesByEnrichment <- function(mutant=NA,           # Name of Delet
     alldata <- getCachedDeleteomeAll()
   }
   
-  hypergs <- data.frame(Condition=as.character(),HyperGpval=as.numeric(), HyperGpvalFDR=as.numeric(),  
+  hypergs <- data.frame(Condition=as.character(),HyperGpval=as.numeric(), Pvalue.FDR=as.numeric(),  
                         sampleSize=as.numeric(), sampleSuccesses=as.numeric(), popSize=as.numeric(), 
                         popSuccesses=as.numeric(), stringsAsFactors = F)
   
@@ -721,33 +719,42 @@ getDeleteomeMatchesByEnrichment <- function(mutant=NA,           # Name of Delet
     popsize <- ndeleteomegenes
     
     hyperp <- phyper(samplesuccesses-1, popsuccesses, (popsize-popsuccesses), samplesize, lower.tail=F) # the minus 1 is because probabilities are P[X>x] by default but we want P[X>=x]
-    hyperpFDR <- 1 # entered later
+    hyperpFDR <- 1 # set later
     
     if( ! is.na(hyperp)){
-      hypergs <- rbind(hypergs,data.frame(Condition=cond,HyperGpval=hyperp, HyperGpvalFDR=hyperpFDR, 
+      hypergs <- rbind(hypergs,data.frame(Condition=cond,HyperGpval=hyperp, Pvalue.FDR=hyperpFDR, 
                                           sampleSize=samplesize, sampleSuccesses=samplesuccesses, 
                                           popSize=popsize, popSuccesses=popsuccesses, stringsAsFactors = F))
     }
   }
   
-  hypergs$HyperGpvalFDR <- p.adjust(hypergs$HyperGpval, method = "BH")
+  hypergs$Pvalue.FDR <- p.adjust(hypergs$HyperGpval, method = "BH")
   
-  pctcutoff <- quantile(hypergs$HyperGpvalFDR, quantileCutoff) # make sure that we are only using the top X% of p-values
-  sighypergs <- hypergs[hypergs$HyperGpvalFDR <= pEnrich & hypergs$HyperGpvalFDR <= pctcutoff,] # X% cutoff and must meet significance criteria
+  hypergs <- addQuantileLevel(hypergs)
   
-  similarStrains <- sighypergs[order(sighypergs$HyperGpvalFDR,decreasing=F),"Condition"] 
+  pctcutoff <- quantile(hypergs$Pvalue.FDR, quantileCutoff, type = 1) # make sure that we are only using the top X% of p-values
+  sighypergs <- hypergs[hypergs$Pvalue.FDR <= pEnrich & hypergs$Pvalue.FDR <= pctcutoff, ] # X% cutoff and must meet significance criteria
+  
+  similarStrains <- sighypergs[order(sighypergs$Pvalue.FDR,decreasing=F),"Condition"] 
   
   if(length(similarStrains)==0){
     message("Could not find any deletion mutants with signatures that significantly overlapped with ", mutant, " deletion")
     return(c())
   }
   
-  sigresults <- sighypergs[order(sighypergs$HyperGpvalFDR,decreasing=F),1:3]
+  sigresults <- sighypergs[order(sighypergs$Pvalue.FDR, decreasing=F), c("Condition", "HyperGpval", "Pvalue.FDR", "Pvalue.FDR.quantile")]
   sigresultsfile <- paste0(thedir, "/output/mutant_similarity/", mutant, "_sigHyperG_L2FC",minAbsLog2FC,"_pDEGs",pDEGs,"_pEnrich",pEnrich,"_quantile",quantileCutoff,".tsv")
   write.table(sigresults, file = sigresultsfile, sep="\t", quote=F, row.names = F, col.names = T)
   message("Results written to ", sigresultsfile)
   
-  return(similarStrains)
+  resultsToOutput <- sigresults
+  
+  if(returnTestValues){
+    return(resultsToOutput)
+  }
+  else{
+    return(similarStrains) # Returns list of Deleteome strains matching the input strain
+  }
 }
 
 
@@ -831,4 +838,17 @@ getStrainNameORFmap <- function(delData){
   strainorfmap[strainorfmap$Strain=="YOL086W_A","ORF"] <- "YOL086W-A"
   
   return(strainorfmap)
+}
+
+
+# Function to add quantile level to data frame of deletion similarity results
+# Expects the input data frame to have a "Pvalue.FDR" column
+addQuantileLevel <- function(results=data.frame()){
+  if(dim(results)[1] > 0){
+    cdf <- ecdf(results$Pvalue.FDR)
+    results$Pvalue.FDR.quantile <- cdf(results$Pvalue.FDR)  
+  }
+  else results$Pvalue.FDR.quantile <- numeric(0)
+  
+  return(results)
 }
