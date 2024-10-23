@@ -16,7 +16,7 @@ For any single-gene deletion profiled in the Deleteome, our software can be used
 
 The first approach considers the magnitude of expression changes in differentially-expressed genes, while the second approach focuses on whether a gene is differentially expressed or not, based on user-defined thresholds. 
 
-In our studies with NUP170, we have observed that the two approaches yield similar results. The correlation-based method tends to be the more conservative option.
+In our studies with NUP170, we have observed that the two approaches yield similar, complementary results. The correlation-based method tends to be the more conservative option.
 
 ## Getting started
 
