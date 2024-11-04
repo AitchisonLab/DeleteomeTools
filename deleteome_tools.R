@@ -531,15 +531,11 @@ getDeleteomeMatchesByReciprocalCorrelation = function(delData=NA,            # F
   
   message("Getting deleteome matches by reciprocal correlation...")
 
-  if( ! is.data.frame(delData)){
-    delData <- getCachedDeleteomeAll()
-  }
+  if( ! is.data.frame(delData)) delData <- getCachedDeleteomeAll()
   
   conditions <- getAllStrainNames(delData)
   
-  if( ! mutant %in% conditions){
-    stop(paste0(mutant, " is not in deleteome"))
-  }
+  if( ! mutant %in% conditions) stop(paste0(mutant, " is not in deleteome"))
   
   # Get the query strain's profile (signature)
   mutantProfile <- getProfileForDeletion(delData, mutant, minAbsLog2FC, pDEGs, consoleMessages = showMessages)
@@ -559,16 +555,14 @@ getDeleteomeMatchesByReciprocalCorrelation = function(delData=NA,            # F
   
   for(cond in conditions){
     
-    if(cond %in% c("wt_matA","wt_by4743","wt_ypd")){
-      next() # Skip the WT control experiments in the deleteome
-    }
+    if(cond %in% c("wt_matA","wt_by4743","wt_ypd")) next() # Skip the WT control experiments in the deleteome
     
     allconddata <- getProfileForDeletion(delData, cond, 0, 1, consoleMessages = showMessages)
     intrsct <- intersect(mutantProfile$systematicName, allconddata$systematicName) # need to do this b/c condition profile won't include the KO'd gene, which might be in the mutant's profile
     
     if(length(intrsct) > 2){
       # Perform correlation test
-      correl <- cor.test(allconddata[allconddata$systematicName %in% intrsct,3],mutantProfile[mutantProfile$systematicName %in% intrsct,3])
+      correl <- cor.test(allconddata[allconddata$systematicName %in% intrsct, 3], mutantProfile[mutantProfile$systematicName %in% intrsct, 3])
       Rval <- as.vector(correl["estimate"][[1]])
       pval <- as.vector(correl["p.value"][[1]])
     }
@@ -597,7 +591,10 @@ getDeleteomeMatchesByReciprocalCorrelation = function(delData=NA,            # F
   pvalcutoff <- quantile(allSigCorrResults$Pvalue.FDR, quantileCutoff, type = 1) # get mutants with p-values that were in the desired quantile
   message("Quantile-based FDR P-value cutoff set to ", pvalcutoff)
   
-  allSigCorrResults <- allSigCorrResults[allSigCorrResults$Pvalue.FDR < pvalcutoff & allSigCorrResults$Pvalue.FDR < pCor,]  
+  # Sometimes the pvalcutoff can be zero, which will incorrectly return no significant strains. Catch that case here.
+  if(pvalcutoff == 0) allSigCorrResults <- allSigCorrResults[allSigCorrResults$Pvalue.FDR == pvalcutoff & allSigCorrResults$Pvalue.FDR < pCor,] 
+  else allSigCorrResults <- allSigCorrResults[allSigCorrResults$Pvalue.FDR < pvalcutoff & allSigCorrResults$Pvalue.FDR < pCor,]  
+  
   allSigCorrResults <- allSigCorrResults[order(allSigCorrResults$CorrCoefficient, decreasing=T),]
   
   # for each signifcantly correlated deletion strain, see if reciprocal correlation is also significant
@@ -722,7 +719,7 @@ getDeleteomeMatchesByEnrichment <- function(mutant=NA,           # Name of Delet
     hyperpFDR <- 1 # set later
     
     if( ! is.na(hyperp)){
-      hypergs <- rbind(hypergs,data.frame(Condition=cond,HyperGpval=hyperp, Pvalue.FDR=hyperpFDR, 
+      hypergs <- rbind(hypergs,data.frame(Condition=cond, HyperGpval=hyperp, Pvalue.FDR=hyperpFDR, 
                                           sampleSize=samplesize, sampleSuccesses=samplesuccesses, 
                                           popSize=popsize, popSuccesses=popsuccesses, stringsAsFactors = F))
     }
@@ -735,7 +732,7 @@ getDeleteomeMatchesByEnrichment <- function(mutant=NA,           # Name of Delet
   pctcutoff <- quantile(hypergs$Pvalue.FDR, quantileCutoff, type = 1) # make sure that we are only using the top X% of p-values
   sighypergs <- hypergs[hypergs$Pvalue.FDR <= pEnrich & hypergs$Pvalue.FDR <= pctcutoff, ] # X% cutoff and must meet significance criteria
   
-  similarStrains <- sighypergs[order(sighypergs$Pvalue.FDR,decreasing=F),"Condition"] 
+  similarStrains <- sighypergs[order(sighypergs$Pvalue.FDR, decreasing=F),"Condition"] 
   
   if(length(similarStrains)==0){
     message("Could not find any deletion mutants with signatures that significantly overlapped with ", mutant, " deletion")
