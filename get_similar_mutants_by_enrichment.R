@@ -26,19 +26,20 @@ mutantnames <- c("nup170", "pex10")  #A character string, vector or list object 
 
 Mthresh <- 0.0 # Absolute log2 fold-change cutoff for identifying differentially-expressed genes in deletion strain
 pDEGs <- 0.05 # P-value cutoff for identifying differentially-expressed genes in deletion strain
-pCor <- 0.05  # P-value cutoff for identifying statistically-significant correlation tests
-qthresh <- 0.1 # quantile cutoff for down-selecting significantly similar deletion strains
+pEnrich <- 0.05  # P-value cutoff for identifying statistically-significant correlation tests
+qthresh <- 0.05 # quantile cutoff for down-selecting similar deletion strains
 
+# Find similar strains in Deleteome
 for(mutantname in mutantnames){  # Iterate through query deletion strains
   
   # Find similar strains in Deleteome
-  similarStrains <- getSimilarStrainsByReciprocalCorrelation(delData = alldata,
-                                                                mutant=mutantname, 
-                                                                minAbsLog2FC = Mthresh, 
-                                                                pDEGs = pDEGs,
-                                                                pCor = pCor,
-                                                                quantileCutoff = qthresh
-                                                                )
+  similarStrains <- getSimilarStrainsByEnrichment( delData = alldata,
+                                                   mutant=mutantname, 
+                                                   minAbsLog2FC = Mthresh, 
+                                                   pDEGs = pDEGs,
+                                                   pEnrich = pEnrich,
+                                                   quantileCutoff = qthresh
+                                                  )
   
   # Show correlated strains
   message("\nSimilar deletion strains:")
@@ -50,22 +51,22 @@ for(mutantname in mutantnames){  # Iterate through query deletion strains
                                          mutant = mutantname, 
                                          minAbsLog2FC = Mthresh, 
                                          pDEGs = pDEGs)
-  
+
   # ...then generate a heatmap showing expression values for the query strain and its significantly similar
   # deleteome strains. Rows are the deletion strain's differentially-expressed genes. Columns are the deletion
   # strains found to be similar to the query strain.
   hm1 <- makeHeatmapDeleteomeMatches(mutantname = mutantname, 
                                      mutantProfile = mutantProfile, 
                                      selectedConditions = similarStrains, 
-                                     fileprefix = "Corr_matches", 
-                                     titledesc = "transcriptional similarity (reciprocal correlation)", 
+                                     fileprefix = "SignatureEnrich_matches", 
+                                     titledesc="transcriptional similarity (signature enrichment)", 
                                      MthreshForTitle = Mthresh, 
                                      pDEGsForTitle = pDEGs,
-                                     pMatchesForTitle = pCor,
+                                     pMatchesForTitle = pEnrich,
                                      quantileForTitle = qthresh,
                                      imagewidth = 5000,
                                      printToFile = T)
-  
+
   # Make the same heatmap as above but only show expression values for SUBTELOMERIC genes. This demonstrates
   # how users can make heatmaps for comparing subtelomeric gene expression patterns between a query strain
   # and other Deleteome strains.
@@ -74,32 +75,31 @@ for(mutantname in mutantnames){  # Iterate through query deletion strains
   hm2 <- makeHeatmapDeleteomeMatches(mutantname = mutantname, 
                                      mutantProfile = mutantProfile, 
                                      selectedConditions = similarStrains, 
-                                     fileprefix = "Corr_matches_SUBTELO", 
-                                     titledesc = "transcriptional similarity (reciprocal correlation)", 
+                                     fileprefix = "SignatureEnrich_matches_SUBTELO", 
+                                     titledesc="transcriptional similarity (signature enrichment)", 
                                      MthreshForTitle = Mthresh, 
                                      pDEGsForTitle = pDEGs,
-                                     pMatchesForTitle = pCor,
+                                     pMatchesForTitle = pEnrich,
                                      quantileForTitle = qthresh,
                                      subteloGenesOnly = T, 
-                                     rowFontSize = 0.275, 
-                                     imagewidth = 4800,
+                                     imagewidth = 5000,
                                      printToFile = T)
-  
+
   # Generate a heatmap as in the first heatmap examplebut show query strain and manually-selected strains 
   # in columns. This demonstrates how users can compare expression values of a query strain's 
   # differentially-expressed genes to corresponding values in any arbitrary Deleteome strain.
   hm3 <- makeHeatmapDeleteomeMatches(mutantname = mutantname, 
                                      mutantProfile = mutantProfile, 
-                                     selectedConditions = c("hmo1", "rif1", "sir4", "ctf8", "ctf18", "dcc1"), 
-                                     fileprefix = "Manually_selected_strains", 
-                                     titledesc = "manual selection", 
+                                     selectedConditions = c("hmo1","rif1","sir4","ctf8","ctf18","dcc1"), 
+                                     fileprefix = "Specific_mutants", 
+                                     titledesc="manual selection", 
                                      MthreshForTitle = Mthresh, 
                                      pDEGsForTitle = pDEGs,
-                                     pMatchesForTitle = pCor,
+                                     pMatchesForTitle = pEnrich,
                                      quantileForTitle = qthresh,
                                      imagewidth = 2550,
                                      printToFile = T)
-  
+
   # Make a mountain lake plot showing distance of a strain's differentially-expressed genes from the closest
   # telomere. This also reports (in the console) subtelomeric enrichment p-values for the mutant's up- and 
   # down-regulated genes.
@@ -109,7 +109,7 @@ for(mutantname in mutantnames){  # Iterate through query deletion strains
                                pDEGs = pDEGs,
                                ymax = 40,
                                printToFile = T)
-  
+
   # Run GO enrichment on genes deleted in similar deletion strains
   GOpadjcutoff = 0.1
   GO <- doGOenrichmentOnDeleteomeMatches(delData = alldata, 
@@ -118,7 +118,7 @@ for(mutantname in mutantnames){  # Iterate through query deletion strains
   
   # If GO enrichment was performed, output results to a file
   if(! is.null(GO)){
-    GOoutputfile <- paste0(dtdir,"/output/GO_enrichment/", mutantname, "_GOresults_Corr_GOpadj", GOpadjcutoff,".tsv")
+    GOoutputfile <- paste0(dtdir,"/output/GO_enrichment/", mutantname, "_GOresults_SignatureEnrich_GOpadj", GOpadjcutoff,".tsv")
     write.table(GO, file=GOoutputfile, sep="\t", quote = F, row.names = F)
     message("Wrote GO enrichment results to ", GOoutputfile)
   }

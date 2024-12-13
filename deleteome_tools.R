@@ -35,23 +35,23 @@ getDeleteomeExpData <- function(folder="") {  # folder: parent folder containing
 # Collect systematic gene names, M values (log2 fold-changes) and p-values for a given deletion.
 # Only microarrayed genes that meet M value and p-value cutoffs are included
 getProfileForDeletion <- function(delData,           # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
-                                  deletionname,      # Name of deletion as string
-                                  Mthresh,           # The absolute log2 fold-change threshold when selecting differentially-expressed genes (use 0 to include all genes)
-                                  pDEGs,           # The p-value threshold to use when selecting differentially-expressed genes (use 1 to include all genes)
+                                  mutant,            # Name of deletion as string
+                                  minAbsLog2FC,      # The absolute log2 fold-change threshold when selecting differentially-expressed genes (use 0 to include all genes)
+                                  pDEGs,             # The p-value threshold to use when selecting differentially-expressed genes (use 1 to include all genes)
                                   consoleMessages=T  # Whether to output console messages
                                   ){
 
   if(consoleMessages){
-    message(paste0("Getting log2 fold-change values for ", deletionname, " from deleteome"))
+    message(paste0("Getting log2 fold-change values for ", mutant, " from deleteome"))
   }
   
   McolSuffix <- "_wt"
-  Mcolname <- paste0(deletionname,"_del_vs",McolSuffix)
-  pcolname <- paste0(deletionname,"_del_vs_wt_2")
+  Mcolname <- paste0(mutant,"_del_vs",McolSuffix)
+  pcolname <- paste0(mutant,"_del_vs_wt_2")
   
   if(Mcolname %in% names(delData) & pcolname %in% names(delData)){
-    selected <- delData[abs(as.numeric(delData[,Mcolname]))>=Mthresh & as.numeric(delData[,pcolname])<=pDEGs,c("systematicName","geneSymbol",Mcolname,pcolname)]
-    selected <- selected[selected$geneSymbol!=toupper(deletionname),]
+    selected <- delData[abs(as.numeric(delData[,Mcolname]))>=minAbsLog2FC & as.numeric(delData[,pcolname])<=pDEGs,c("systematicName","geneSymbol",Mcolname,pcolname)]
+    selected <- selected[selected$geneSymbol!=toupper(mutant),]
     selected[,3] <- as.numeric(selected[,3])
     selected[,4] <- as.numeric(selected[,4])
   }
@@ -140,7 +140,7 @@ getGenePositions <- function(includeMito=F  # Whether to include mitochondrial g
         distFromCent <- geneStartPos-chrCentEnd
       }
       else{
-        message("ERROR: ",geneid," is neither ahead of nor behind centromere") # would only be thrown if a gene overlaps the centromere
+        message("\nERROR: ",geneid," is neither ahead of nor behind centromere") # would only be thrown if a gene overlaps the centromere
         return(NULL)
       }
     }
@@ -198,7 +198,7 @@ genomicRegionEnrichment <- function(genePositions=NULL,
   }
   
   if(length(systematicNames)==0){
-    message("ERROR: Genomic region enrichment test not performed because input gene list was empty")
+    message("\nERROR: Genomic region enrichment test not performed because input gene list was empty")
     return()
   }
   
@@ -258,6 +258,11 @@ doGOenrichmentOnDeleteomeMatches <- function(delData,                     # Full
                                              useDeleteomeBackground = T   # Uses gene names, not systematic names
                                              ){ 
   
+  if(length(genes) == 0){
+    message("\nERROR performing GO enrichment: the input vector of gene names is empty")
+    return(invisible(NULL))
+  }
+  
   message("Performing GO enrichment tests")
   
   suppressMessages(suppressWarnings(require(clusterProfiler)))
@@ -312,7 +317,19 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,             # Name of del
                                         imageheight=2400,          # If writing to file, the Width of the saved image in pixels
                                         printToFile=T              # Whether to write heatmap to a file or show in new window
                                         ){
+  
   # Make heatmap comparing all significantly matched mutants to mutant of interest
+  insuffcondserr <- paste0("\nERROR: Cannot make heatmap because the number of Deleteome strains to show alongside the ", mutantname, " deletion is 0. At least 1 is required.")
+
+  if(length(selectedConditions)==0){
+    message(insuffcondserr)
+    return(invisible(NULL))
+  }  
+  if( all(is.na(selectedConditions) )) {
+    message(insuffcondserr)
+    return(invisible(NULL))
+  }
+  
   genesThatCanBeCompared <- mutantProfile[ ! mutantProfile$geneSymbol %in% toupper(selectedConditions),]  # Omit mutantname from list of similar mutants
   
   rowtitleprefix <- "Genes"
@@ -325,8 +342,14 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,             # Name of del
     rowtitleprefix <- "Subtelomeric genes"
   }
   
+  if(dim(genesThatCanBeCompared)[1] <=2){
+    message("\nERROR: Cannot make heatmap because the number of ", tolower(rowtitleprefix), " (row entries) to plot in the heatmap is ", 
+            dim(genesThatCanBeCompared)[1], ", but at least two are required.")
+    return(invisible(NULL))
+  } 
+  
   sigcorrheatmap <- data.frame(Gene=as.character(genesThatCanBeCompared$systematicName), stringsAsFactors=F)
-  sigcorrheatmap[,mutantname] <- as.numeric(mutantProfile[mutantProfile$systematicName %in% genesThatCanBeCompared$systematicName,3])
+  sigcorrheatmap[ , mutantname] <- as.numeric(mutantProfile[mutantProfile$systematicName %in% genesThatCanBeCompared$systematicName,3])
   
   # Collect transcriptional profiles for Deleteome strains that will be included in the heatmap
   for(cond in selectedConditions){
@@ -345,17 +368,14 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,             # Name of del
   
   if(printToFile){
     hmfile <- paste0(thedir, "/output/heatmaps/",mutantname,"_",fileprefix,"_Heatmap_l2FC",MthreshForTitle,"_pDEGs",
-                      pDEGsForTitle, "_pMatches",pMatchesForTitle,"_quantile",quantileForTitle,".jpg")
-    jpeg(file = hmfile, 
-            width=imagewidth, height = imageheight, res=300, units="px")
+                      pDEGsForTitle, "_pMatches",pMatchesForTitle,"_quantile",quantileForTitle,".png")
+    png(file = hmfile, width=imagewidth, height = imageheight, res=300, units="px")
   }
-  else{
-    dev.new(width=10,height=8,noRStudioGD = TRUE)
-  }
+  else dev.new(width=10,height=8,noRStudioGD = TRUE)
   
   par(cex.main=0.75) ## Set size of main title and legend title
 
-    rowlabels <- rownames(mybigmat)
+  rowlabels <- rownames(mybigmat)
   rightmar <- 5
   
   if( ! showRowLabels){
@@ -365,12 +385,21 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,             # Name of del
   
   mycolnamesdeltaitalic <- colnames(mybigmat)
   mycolnamesdeltaitalic <- lapply(mycolnamesdeltaitalic, function(x) bquote(italic(.(x)*Delta)))
+  names(mycolnamesdeltaitalic) <- colnames(mybigmat)
+  mycolnamesdeltaitalic[[mutantname]] <- bquote(bolditalic(.(mutantname)*Delta))  # make the mutantname strain label bold
+  
+  mycolcolors <- rep("#4A4A4B", dim(mybigmat)[2])
+  names(mycolcolors) <- colnames(mybigmat)
+  mycolcolors[mutantname] <- "black"  # Make mutant name label black, not almost-black
   
   # Make the heatmap object
-  clust <- heatmap.2(mybigmat, Colv = clusterColumns, trace = "none", symbreaks = T, 
-                     xlab = "Deletion strain", ylab = bquote(.(rowtitleprefix)*" in "*italic(.(mutantname)*Delta)*" signature"),
+  clust <- heatmap.2(mybigmat, 
+                     Colv = clusterColumns, trace = "none", symbreaks = T, 
+                     xlab = "Deletion strain", 
+                     ylab = bquote(.(rowtitleprefix)*" in "*italic(.(mutantname)*Delta)*" signature"),
                      labRow = rowlabels,
                      labCol = as.expression(mycolnamesdeltaitalic),
+                     colCol = mycolcolors,
                      srtCol = 45,
                      symm = F,
                      symkey = F, 
@@ -389,7 +418,7 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,             # Name of del
   
   if(printToFile){ 
     dev.off()
-    message("Printed heatmap to ", hmfile)
+    message("\nPrinted heatmap to ", hmfile)
   }
   
   return(mybigmat)
@@ -400,20 +429,22 @@ makeHeatmapDeleteomeMatches <- function(mutantname=NA,             # Name of del
 makeGenomicPositionHistogram <- function(delData=NULL,           # Full Deleteome data set object (can be obtained using getDeleteomeExpData())
                                          mutant=NULL,            # Name of Deleteome mutant strain to analyze
                                          genePositions=NULL,     # Table of genes and genomic positions (can be obtained using getGenePositions())
-                                         relativeTo="telomere",  # can be "telomere" or "centromere"
+                                         relativeTo="telomere",  # Valid options are "telomere" or "centromere". If "telomere" specified, distance to closest telomere (right or left) is plotted
                                          rangeInKB=25,           # Window (in kilobases) for defining a gene as either in the telomeric or centromeric region
                                          Mthresh=0,              # Log2 fold-change threshold for defining differentially-expressed genes
                                          pDEGs=0.05,             # P-value threshold for defining differentially-expressed genes
-                                         xmax=500,               # X-axis maximum
+                                         xmax=NA,                # X-axis maximum. If NA, uses maximum distance to closest telomere or to the centromere among all genes
                                          ymax=50,                # Y-axis maximum
-                                         upcolor="red",          # Color to use for upregulated genes
-                                         downcolor="blue",       # Color to use for downregulated genes
+                                         upcolor="#d53e4f",      # Color to use for upregulated genes
+                                         downcolor="#3288bd",    # Color to use for downregulated genes
                                          showupdownlabels=T,     # Whether to inclue "upregulated" and "downregulated" labels in plot
-                                         file=NA                 # Optional file location to save plot. If NA (default), plot is shown in new window.
+                                         printToFile=T           # Whether to write heatmap to a file or show in new window
                                          ){ 
   
-  if(is.null(mutant)){
-    message("Cannot produce genomic position histogram: mutant ID is NA")
+  if(is.null(mutant)) message("Cannot produce genomic position histogram: mutant ID is NA")
+  if( ! relativeTo %in% c("telomere", "centromere")){
+    message("\nERROR: please use either \"telomere\" or \"centromere\" for the \"relativeTo\" parameter. ", relativeTo, " is not valid." )
+    return(invisible(NULL))
   }
   
   message("Making genomic position histogram for mutant ", mutant)
@@ -428,12 +459,8 @@ makeGenomicPositionHistogram <- function(delData=NULL,           # Full Deleteom
     genePositions <- getGenePositions(includeMito = F)
   }
   
-  if(relativeTo=="telomere"){
-    relativeToCol <- "dist_from_telo"
-  }
-  else if(relativeTo=="centromere"){
-    relativeToCol <- "dist_from_cent"
-  }
+  if(relativeTo=="telomere") relativeToCol <- "dist_from_telo"
+  else if(relativeTo=="centromere") relativeToCol <- "dist_from_cent"
   
   # Use the following to show VdVFig3 plots of selected mutants
   allDF <- genePositions[,relativeToCol]/1000 # get all distance from telomere numbers; filter out mitochondrial genes? If so: genePositions$Chr != 'Mito'
@@ -455,12 +482,8 @@ makeGenomicPositionHistogram <- function(delData=NULL,           # Full Deleteom
   
   mybreaks = seq(from=0, to=max(na.omit(genePositions[,relativeToCol]))/1000, by=5)
   
-  if(relativeTo=="telomere"){
-    mybreaks <- c(mybreaks,770) # max dist from telo in genePositions is 765.197 kb. Need one more breakpoint for histogram to include it.
-  }
-  else{
-    mybreaks <- c(mybreaks, 1085) # max dist from telo in genePositions is 1081.042 kb. Need one more breakpoint for histogram to include it.
-  }
+  if(relativeTo=="telomere") mybreaks <- c(mybreaks,770) # max dist from telo in genePositions is 765.197 kb. Need one more breakpoint for histogram to include it.
+  else mybreaks <- c(mybreaks, 1085) # max dist from centromere in genePositions is 1081.042 kb. Need one more breakpoint for histogram to include it.
   
   regionUPhyperp <- genomicRegionEnrichment(genePositions, 
                                             systematicNamesBG=profileAll[profileAll$systematicName %in% genePositions$Geneid, "systematicName"], 
@@ -482,54 +505,58 @@ makeGenomicPositionHistogram <- function(delData=NULL,           # Full Deleteom
   allDFgg <- as.data.frame(allDF)
   names(allDFgg) <- "dist"
   
+  relativeToLabel <- relativeTo
+  if(relativeTo == "telomere") relativeToLabel <- "closest telomere"
+  
+  if(is.na(xmax)) xmax <- max(mybreaks)
+  
   # Create plot with ggplot
   p <- ggplot() +
-    geom_histogram(data = allDFgg, aes(x = dist, y = after_stat(count)/3), fill="gray", binwidth = 5, boundary=-5) + 
-    geom_histogram(data = allDFgg, aes(x = dist, y = -after_stat(count)/3), fill="gray", binwidth = 5, boundary=-5) + 
-    geom_histogram(data = upDFgg, aes(x = dist, y = after_stat(count)), fill=upcolor, binwidth = 5, boundary=-5) +
-    geom_histogram(data = downDFgg, aes(x = dist, y = -after_stat(count)), fill= downcolor, binwidth = 5, boundary=-5) +
-    scale_x_continuous(breaks=seq(0,xmax,by=25)) +
+    geom_histogram(data = allDFgg[allDFgg$dist <= xmax, , drop = F], aes(x = dist, y = after_stat(count)/3), fill="gray", binwidth = 5, boundary=-5) + 
+    geom_histogram(data = allDFgg[allDFgg$dist <= xmax, , drop = F ], aes(x = dist, y = -after_stat(count)/3), fill="gray", binwidth = 5, boundary=-5) + 
+    geom_histogram(data = upDFgg[upDFgg$dist <= xmax, , drop = F], aes(x = dist, y = after_stat(count)), fill=upcolor, binwidth = 5, boundary=-5) +
+    geom_histogram(data = downDFgg[downDFgg$dist <= xmax, , drop = F], aes(x = dist, y = -after_stat(count)), fill= downcolor, binwidth = 5, boundary=-5) +
+    scale_x_continuous(breaks=seq(0, xmax, by=25)) +
     scale_y_continuous(labels = abs) + 
     theme(plot.title = element_text(size=25, face="bold"), axis.text=element_text(size=11),
            axis.title=element_text(size = 18,face="plain"), axis.text.x = element_text(angle = 45, hjust=1)) +
-    xlab(paste0("Distance from ",relativeTo," (kb)")) + 
+    xlab(paste0("Distance from ",relativeToLabel," (kb)")) + 
     ylab(paste0("Number of ORFs")) + 
     ggtitle(bquote(italic(.(mutant)*Delta)))
   
   # Show the "upregulated" and "downregulated" labels if desired
-  if(showupdownlabels){
+  if(showupdownlabels)
     p <- p + annotate("text", x=(xmax-(xmax/4)), y=(ymax-(ymax/4)), label= "upregulated", color=upcolor, size = 6) +
       annotate("text", x=(xmax-(xmax/4)), y=(-ymax+(ymax/4)), label= "downregulated", color=downcolor, size = 6)
-  }
   
-  if(is.na(file)){
-    dev.new(width=9,height=5.5, noRStudioGD = T)
-  }
+  if(! printToFile) dev.new(width=9,height=5.5, noRStudioGD = T)
   else{
-    png(filename = file, width=9, height=5.5, res=300, units="in")
-  }  
+    mlfile <- paste0(thedir, "/output/mountain_lake_plots/",mutant,"_MountainLake_l2FC", Mthresh,"_pDEGs", pDEGs, "_", relativeTo, "_range", rangeInKB, "KB.png")
+    png(filename = mlfile,width=9, height=5.5, res=300, units="in")
+  } 
   
   print(p)
   
-  if( ! is.na(file)){
+  if(printToFile){
     dev.off()
+    message("\nPrinted mountain lake plot to ", mlfile)
   }
 }
 
 # Find mutants with similar expression profiles using hypergeometric enrichment tests
-getDeleteomeMatchesByReciprocalCorrelation = function(delData=NA,            # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
+getSimilarStrainsByReciprocalCorrelation <- function( delData=NA,            # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
                                                       mutant=NA,             # Name of Deleteome strain to analyze
                                                       minAbsLog2FC=0,        # Log2 fold-change cutoff used to classify genes as differentially expressed 
                                                                              #   (absolute value of log2 fold-change must be higher than minAbsLog2FC)
                                                       pDEGs=0.05,            # P-value cutoff used to identify differentially-expressed genes
                                                       pCor=0.05,             # P-value cutoff used to identify statisitally significant correlation tests
-                                                      quantileCutoff=0.05,   # Quantile cutoff for selecting the Deleteome matches with highest confidence
+                                                      quantileCutoff=0.1,   # Quantile cutoff for selecting the Deleteome matches with highest confidence
                                                       returnTestValues=F,    # If true, a data frame containing the correlation test results against each similar 
                                                                              # Deleteome mutant is returned. If false, only the names of the similar mutants are returned.
                                                       showMessages = F       # Whether to output progress messages
                                                       ){
   
-  message("Getting deleteome matches by reciprocal correlation...")
+  message("\n\nGetting deleteome matches for ", mutant, " deletion strain by reciprocal correlation...")
 
   if( ! is.data.frame(delData)) delData <- getCachedDeleteomeAll()
   
@@ -540,9 +567,9 @@ getDeleteomeMatchesByReciprocalCorrelation = function(delData=NA,            # F
   # Get the query strain's profile (signature)
   mutantProfile <- getProfileForDeletion(delData, mutant, minAbsLog2FC, pDEGs, consoleMessages = showMessages)
   
-  if(dim(mutantProfile)[1]==0){
-    message(c(mutant," had no significantly changed genes, based on M-value and p-value thresholds"))
-    return(c())
+  if(dim(mutantProfile)[1] <= 2){
+    message(c("\nERROR: ", mutant," had ", dim(mutantProfile)[1], " differentially-expressed genes based on entered M-value and p-value thresholds, but a minimum of 3 is required for reciprocal correlation analysis."))
+    return(invisible(NULL))
   }
   
   
@@ -658,17 +685,17 @@ getDeleteomeMatchesByReciprocalCorrelation = function(delData=NA,            # F
 
 
 # Method to find similar Deleteome mutants using hypergeometric-based approach
-getDeleteomeMatchesByEnrichment <- function(mutant=NA,           # Name of Deleteome strain to analyze
-                                            minAbsLog2FC=0,      # Log2 fold-change cutoff used to classify genes as differentially expressed 
+getSimilarStrainsByEnrichment <- function(mutant=NA,           # Name of Deleteome strain to analyze
+                                          minAbsLog2FC=0,      # Log2 fold-change cutoff used to classify genes as differentially expressed 
                                                                  #   (absolute value of log2 fold-change must be higher than minAbsLog2FC)
-                                            pDEGs=0.05,           # P-value cutoff used to identify differentially-expressed genes
-                                            pEnrich=0.05,        # P-value cutoff used to identify statistically significant enrichment tests
-                                            quantileCutoff=0.05, # Quantile cutoff for selecting the Deleteome matches with highest confidence
-                                            delData=NA,          # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
-                                            returnTestValues=F,  # If true, a data frame containing the correlation test results against each similar 
+                                          pDEGs=0.05,           # P-value cutoff used to identify differentially-expressed genes
+                                          pEnrich=0.05,        # P-value cutoff used to identify statistically significant enrichment tests
+                                          quantileCutoff=0.05, # Quantile cutoff for selecting the Deleteome matches with highest confidence
+                                          delData=NA,          # Full Deleteome expression data set (can be obtained using getDeleteomeExpData())
+                                          returnTestValues=F,  # If true, a data frame containing the correlation test results against each similar 
                                                                  # Deleteome mutant is returned. If false, only the names of the similar mutants are returned.
-                                            showMessages = F     # Whether to output progress messages
-                                            ){
+                                          showMessages = F     # Whether to output progress messages
+                                          ){
   
   message("Getting deleteome matches based on enrichment tests...")
   alldata <- delData
@@ -696,7 +723,7 @@ getDeleteomeMatchesByEnrichment <- function(mutant=NA,           # Name of Delet
   mutantprofileALL <- getProfileForDeletion(alldata, mutant, 0, 1.0, consoleMessages = showMessages)
   
   if(dim(mutantprofile)[1]==0){
-    message(c(mutant," had no significantly changed genes, based on M-value and p-value thresholds"))
+    message(c("\nERROR: ", mutant," had no significantly changed genes, based on M-value and p-value thresholds"))
     return(c())
   }
   
@@ -789,8 +816,8 @@ getStrainNameORFmap <- function(delData){
   allorfs <- keys(org.Sc.sgd.db, keytype = "ORF")
   allaliases <- keys(org.Sc.sgd.db, keytype = "ALIAS")
   
-  genenameorfmap <- AnnotationDbi::select(org.Sc.sgd.db, keys = allgenenames, keytype = "GENENAME", columns = c("GENENAME", "ORF"))
-  aliasorfmap <- AnnotationDbi::select(org.Sc.sgd.db, keys = allstrainnames, keytype = "ALIAS", columns = c("ALIAS", "ORF"))
+  genenameorfmap <- suppressMessages(AnnotationDbi::select(org.Sc.sgd.db, keys = allgenenames, keytype = "GENENAME", columns = c("GENENAME", "ORF")))
+  aliasorfmap <- suppressMessages(AnnotationDbi::select(org.Sc.sgd.db, keys = allstrainnames, keytype = "ALIAS", columns = c("ALIAS", "ORF")))
   
   strainorfmap <- data.frame(Strain=allstrainnames, ORF=NA)
   
@@ -819,7 +846,7 @@ getStrainNameORFmap <- function(delData){
       strainorfmap[strainorfmap$Strain==strain, "MappingType"] <- mapmethod
     }
     else if(length(orf) > 1){
-      message("ERROR: Found multiple ORFs for strain ", strain)
+      message("\nERROR: Found multiple ORFs for strain ", strain)
       stop(0)
     }
   }
