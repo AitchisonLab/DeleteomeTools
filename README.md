@@ -118,7 +118,7 @@ hm1 <- makeHeatmapDeleteomeMatches( mutantname = "nup170",  # Strain name to dis
 * Make a Mountain Lake plot for the query gene/strain that shows the genomic position of the strain's differentially-expressed genes relative to closest telomere
 ```
 makeGenomicPositionHistogram(  delData = alldata,  # Deleteome expression data object
-                               mutant = "nup170,   # Deletion strain to visualize
+                               mutant = "nup170",  # Deletion strain to visualize
                                Mthresh = 0.0,      # Absolute log2 fold-change cutoff for identifying differentially-expressed genes in deletion strain
                                pDEGs = 0.05,       # P-value cutoff for identifying differentially-expressed genes in deletion strain
                                ymax = 40,          # Maximum value for Y-axis
@@ -128,7 +128,7 @@ makeGenomicPositionHistogram(  delData = alldata,  # Deleteome expression data o
 
 * Perform GO enrichment to functionally profile the genes deleted in strains similar to the query strain, thereby predicting function of query gene
 ```
-doGOenrichmentOnDeleteomeMatches( delData = alldata,         # Deleteome expression data object
+GOresults <- doGOenrichmentOnDeleteomeMatches( delData = alldata,         # Deleteome expression data object
                                   genes = similarStrains,    # Set of genes to test for GO enrichment (the genes deleted in each strain found to be similar to the query strain)
                                   padjthresh = 0.1           # FDR-adjusted P-value cutoff for significant enrichment. Only enrichment tests meeting this cutoff are returned.
                                 )
