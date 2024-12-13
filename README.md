@@ -52,7 +52,7 @@ Where [...] is replaced with the full path to the repository. Users can then sou
 source("FULL PATH TO EXAMPLE SCRIPT")
 ```
 
-## Step-by-step console usage
+## Step-by-step console usage in base R
 The scripts _get_similar_mutants_by_correlation.R_ and _get_similar_mutants_by_enrichment.R_ in this repository contain examples of the commands used to perform strain similarity matching,  visualize results, and run GO enrichment analyses. Here we detail each major function illustrated in the examples in turn.
 * First, set the working directory to the repository folder
 ```
