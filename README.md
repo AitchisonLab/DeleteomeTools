@@ -128,9 +128,9 @@ makeGenomicPositionHistogram(  delData = alldata,  # Deleteome expression data o
 
 * Perform GO enrichment to functionally profile the genes deleted in strains similar to the query strain, thereby predicting function of query gene
 ```
-GOresults <- doGOenrichmentOnDeleteomeMatches( delData = alldata,         # Deleteome expression data object
-                                  genes = similarStrains,    # Set of genes to test for GO enrichment (the genes deleted in each strain found to be similar to the query strain)
-                                  padjthresh = 0.1           # FDR-adjusted P-value cutoff for significant enrichment. Only enrichment tests meeting this cutoff are returned.
+GOresults <- doGOenrichmentOnDeleteomeMatches( delData = alldata,  # Deleteome expression data object
+                                  genes = similarStrains,          # Set of genes to test for GO enrichment (the genes deleted in each strain found to be similar to the query strain)
+                                  padjthresh = 0.1                 # FDR-adjusted P-value cutoff for significant enrichment. Only enrichment tests meeting this cutoff are returned.
                                 )
 ```
 
