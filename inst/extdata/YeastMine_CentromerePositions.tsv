@@ -1,0 +1,17 @@
+Primary DBID	Systematic Name	Standard Name	Sgd Alias	Description	Feature Type	Qualifier	End	Start	Strand
+S000006463	CEN1	CEN1	""	Chromosome I centromere	centromere	""	151582	151465	1
+S000006464	CEN2	CEN2	""	Chromosome II centromere	centromere	""	238323	238207	1
+S000006465	CEN3	CEN3	""	Chromosome III centromere	centromere	""	114501	114385	1
+S000006466	CEN4	CEN4	""	Chromosome IV centromere	centromere	""	449821	449711	1
+S000006470	CEN9	CEN9	""	Chromosome IX centromere	centromere	""	355745	355629	1
+S000006467	CEN5	CEN5	""	Chromosome V centromere	centromere	""	152104	151987	1
+S000001896	CEN6	CEN6	""	Chromosome VI centromere	centromere	""	148627	148510	1
+S000006468	CEN7	CEN7	""	Chromosome VII centromere	centromere	""	497038	496920	-1
+S000006469	CEN8	CEN8	""	Chromosome VIII centromere	centromere	""	105703	105586	-1
+S000006471	CEN10	CEN10	""	Chromosome X centromere	centromere	""	436425	436307	-1
+S000006472	CEN11	CEN11	""	Chromosome XI centromere	centromere	""	440246	440129	-1
+S000006473	CEN12	CEN12	""	Chromosome XII centromere	centromere	""	150947	150828	-1
+S000006474	CEN13	CEN13	""	Chromosome XIII centromere	centromere	""	268149	268031	1
+S000006475	CEN14	CEN14	""	Chromosome XIV centromere	centromere	""	628875	628758	1
+S000006476	CEN15	CEN15	""	Chromosome XV centromere	centromere	""	326702	326584	-1
+S000006477	CEN16	CEN16	""	Chromosome XVI centromere	centromere	""	556073	555957	1

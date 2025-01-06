@@ -1,0 +1,15 @@
+Package: DeleteomeTools
+Title: Identify transcriptome similarities among single-gene yeast deletion strains within the Deleteome compendium
+Version: 0.0.1
+Authors@R: 
+    person("Maxwell", "Neal", , "max.neal@seattlechildrens.org", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-2390-6572"))
+Description: DeleteomeTools uses a publicly available compendium of transcriptomes from yeast single-gene deletion strains (the "Deleteome"") to predict gene function. Primarily, the codebase provides tools for identifying deletion strains with transcriptomic signatures similar to a query strain, thereby associating the gene deleted in the query strain with other genes that may be functionally related. 
+License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+    license
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Depends: 
+    R (>= 2.10)
+LazyData: true

@@ -1,0 +1,17 @@
+.Rproj.user
+/get_similar_mutants_by_correlation_withPlotGOheirarchyStuff.R
+/get_similar_mutants_by_hypergeometric_withPlotGOhierarchyStuff.R
+/deleteome_tools_extraFunctions.R
+/makeGenePositionsTableFromGTF.R
+/makeAndFormatDeletomeExpressionDatabase.R
+/deleteome_exp_dataNEW.RData
+/validation_by_KemmerenMethod.R
+/validation_by_CAFA.R
+/validation_by_GO.R
+/validation_by_GO_HyperG.R
+/validation_by_GO_random.R
+/makeSimilarityGraphNetworkViz.R
+/ConnectivityHeatmapFromSimilarityGraph.pdf
+/ConnectivityHeatmapFromSimilarityGraph.png
+/getMainGOthemes.R
+/GetNumGOannsOnDeleteomeGenesVsAllGenes.R
