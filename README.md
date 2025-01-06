@@ -1,4 +1,4 @@
-# Deleteome-Tools
+# DeleteomeTools
 
 The Deleteome compendium, a publicly-available collection of ~1,500 transcriptomes from single-gene deletion yeast strains, is described in 
 
@@ -6,7 +6,7 @@ The Deleteome compendium, a publicly-available collection of ~1,500 transcriptom
 and can be downloaded from [https://deleteome.holstegelab.nl](https://deleteome.holstegelab.nl)
 
 
-Our Deleteome-Tools software was originally developed to identify gene products that are functionally associated with the nucleoporin NUP170.
+Our DeleteomeTools software was originally developed to identify gene products that are functionally associated with the nucleoporin NUP170.
 We used the data in the Deleteome to identify genes that, when deleted, alter the yeast transcriptome in a way that is similar to the alterations caused by a NUP170 deletion.
 This work is described in 
 
@@ -42,7 +42,7 @@ getAllStrainNames(alldata) # Prints the gene deleted for each Deleteome strain
 ## Getting started in the base R environment
 
 * Clone this repository to your location of choice.
-* Base R users will need to specify the path to the downloaded Deleteome-Tools repository and set it as their working directory.
+* Base R users will need to specify the path to the downloaded DeleteomeTools repository and set it as their working directory.
 * If running the example _get_similar_mutants_by_correlation.R_ script, edit line 5 so the ```dtdir``` variable is set to the path to the downloaded repository folder.
 ```
 dtdir <- "[...]" 
@@ -59,7 +59,7 @@ The scripts _get_similar_mutants_by_correlation.R_ and _get_similar_mutants_by_e
 dtdir <- "ENTER YOUR PATH TO REPOSITORY FOLDER"
 setwd(dtdir)  # Set working directory
 ```
-* Load the Deleteome-Tools codebase
+* Load the DeleteomeTools codebase
 ```
 source(paste0(dtdir, "/deleteome_tools.R")) #  Source the deleteome_tools.R file
 ```
