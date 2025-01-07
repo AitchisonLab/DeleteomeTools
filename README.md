@@ -32,7 +32,7 @@ Then, install DeleteomeTools via this GitHub site
 library(devtools)  # or library(remotes)
 install_github("AitchisonLab/DeleteomeTools")
 ```
-Users can overwrite a previous installation using
+If needed, users can overwrite a previous installation using
 ```
 install_github("AitchisonLab/DeleteomeTools", force = T)
 ```
@@ -46,14 +46,14 @@ DeleteomeTools was primarily developed to identify deletion strains in the Delet
 
 For example, users can identify deletion strains similar to the _nup170_ deletion strain using
 ```
-sim <- getSimilarStrainsByReciprocalCorrelation(strain = "nup170, outputDir = "[enter directory to save output]")
+sim <- getSimilarStrainsByReciprocalCorrelation(strain = "nup170", outputDir = "[enter directory to save output]")
 ```
 The _sim_ variable will contain the names of deletion strains found to be transcriptionally similar to the _nup170_ deletion strain. 
 A table showing the ranked list of similar deletion strains is saved to the folder specified in the _outputDir_ parameter.
 
 To perform the same analysis using the hypergeometric-based alternative mentioned above, use
 ```
-sim <- getSimilarStrainsByEnrichment(strain = "nup170, outputDir = "[enter output folder path]")
+sim <- getSimilarStrainsByEnrichment(strain = "nup170", outputDir = "[enter output folder path]")
 ```
 These similarity analysis functions also include adjustable parameters that set statistical cutoffs for identifying the query strain's set of differentially-expressed genes (DEGs) as well as its similar strains. The default values are based on a systematic analysis of DeleteomeTools' performance for predicting gene function. They are set to optimize the trade-off between functional prediction sensitivity and total number of functional predictions. Users can adjust these parameters to make statisitcal cutoffs more stringent or permissive as desired.
 
@@ -63,15 +63,15 @@ getAllStrainNames()
 ```
 To iteratively perform similarity analyses over multiple query genes and store results in a list, you can use
 ```
-results <- list()
-for(mystrain in c("nup170", "pex5")){
-  sim <- getSimilarStrainsByReciprocalCorrelation(mystrain, outputDir = "[enter output folder path]")
+results <- list()  # List for storing results
+for(astrain in c("nup170", "pex5")){
+  sim <- getSimilarStrainsByReciprocalCorrelation(astrain, outputDir = "[enter output folder path]")
   results[[mystrain]] <- sim
 }
 ```
 ### Gene function prediction
-After identifying the set of deletion strains that are similar to a query strain, users can functionally profile the set of genes deleted in those similar strains using GO enrichment analysis. 
-The GO biological processes, cellular components, and molecular functions significantly enriched in this analysis indicate the query strain may be associated with those processes, components and functions. By default, the list of all genes deleted across Deleteome strains is used as the background for the enrichment analysis.
+After identifying the set of deletion strains that are similar to a query strain, users can functionally profile the set of genes deleted in those strains using GO enrichment analysis. 
+The GO biological processes, cellular components, and molecular functions that are significantly enriched in these analysis indicate the query strain may be associated with those processes, components and functions. By default, the list of all genes deleted across Deleteome strains is used as the background for the enrichment analysis.
 
 Perform GO enrichment on the genes deleted in strains found to be similar to a query strain using
 ```
@@ -83,7 +83,7 @@ The GOenrichmentOnStrains() function also includes an adjustable parameter _padj
 ## Visualization features
 
 ### Gene expression heatmaps
-It may be useful for users to visualize gene expression values for a query strain alongside values from other strains such as those found to be transcriptionally similar. DeleteomeTools allows users to generate heatmaps showing such comparisons.
+It may be useful for users to visualize gene expression values for a query strain alongside values from other strains such as those found to be transcriptionally similar. DeleteomeTools allows users to generate customizeable heatmaps showing such comparisons.
 
 The following code will generate a heatmap of gene expression values for the _nup170_ deletion strain's differentially expressed genes (DEGs, rows) alongside values from strains that are transcriptionally similar (columns). In this example, default values for statistical cutoff parameters (to select the query strain's DEGs and similar strains) are used.
 ```
