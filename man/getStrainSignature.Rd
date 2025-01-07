@@ -27,6 +27,6 @@ A data frame with systematic gene ids, gene names, M values (log2 fold-changes v
 Get data for a deletion strain's differentially-expressed genes
 }
 \examples{
-# getProfileForDeletion(strain = "nup170", minAbsLog2FC = 0, pDEGs = 0.05)
+# getStrainSignature(strain = "nup170", minAbsLog2FC = 0, pDEGs = 0.05)
 
 }

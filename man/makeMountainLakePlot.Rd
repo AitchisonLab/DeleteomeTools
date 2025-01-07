@@ -9,7 +9,7 @@ makeMountainLakePlot(
   genePositions = NULL,
   relativeTo = "telomere",
   rangeInKB = 25,
-  Mthresh = 0,
+  minAbsLog2FC = 0,
   pDEGs = 0.05,
   xMax = NA,
   yMax = 50,
@@ -29,7 +29,7 @@ makeMountainLakePlot(
 
 \item{rangeInKB}{Window (in kilobases) for defining a gene as either in the telomeric or centromeric region}
 
-\item{Mthresh}{Log2 fold-change threshold for defining differentially-expressed genes}
+\item{minAbsLog2FC}{Log2 fold-change threshold for defining differentially-expressed genes}
 
 \item{pDEGs}{P-value threshold for defining differentially-expressed genes}
 

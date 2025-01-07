@@ -2,7 +2,7 @@
 #' Find deletion strains with similar expression profiles to a query strain using reciprocal correlation
 #'
 #' @param strain Name of Deleteome strain to analyze (query strain/query gene)
-#' @param outputdir Directory in which to save similarity analysis results
+#' @param outputDir Directory in which to save similarity analysis results
 #' @param minAbsLog2FC Log2 fold-change cutoff used to classify genes as differentially-expressed (the absolute value of log2 fold-change must be higher than minAbsLog2FC)
 #' @param pDEGs P-value cutoff used to identify differentially-expressed genes
 #' @param pCor P-value cutoff used to identify statistically significant correlation tests
@@ -14,14 +14,14 @@
 #'
 #' @examples
 #' # getSimilarStrainsByReciprocalCorrelation(strain = "nup170",
-#' #                                          outputdir = "...output directory path...",
+#' #                                          outputDir = "...output directory path...",
 #' #                                          minAbsLog2FC = 0,
 #' #                                          pDEGs = 0.05,
 #' #                                          pCor = 0.05,
 #' #                                          quantileCutoff = 0.1)
 #'
 getSimilarStrainsByReciprocalCorrelation <- function( strain="",
-                                                      outputdir = NA,
+                                                      outputDir = NA,
                                                       minAbsLog2FC=0,
                                                       pDEGs=0.05,
                                                       pCor=0.05,
@@ -29,22 +29,45 @@ getSimilarStrainsByReciprocalCorrelation <- function( strain="",
                                                       returnTestValues=F,
                                                       showMessages = F){
 
-  message("\n\nGetting deleteome matches for ", strain, " deletion strain by reciprocal correlation...")
+  message("\n\nFinding Deleteome strains transcriptionally similar to ", strain, " deletion strain by reciprocal correlation...")
 
   conditions <- getAllStrainNames()
 
-  if( ! strain %in% conditions) stop(paste0(strain, " is not a strain in the Deleteome"))
-
-  outputdir <- file.path(outputdir)
-
-  if(is.na(outputdir)){
-    message("ERROR: Please specify the directory in which to save results of similarity analysis")
+  if( is.character(strain)){
+    if( ! strain %in% conditions){
+      message(paste0("Could not identify similar strains: ", strain, " is not a strain in the Deleteome"))
+      return(invisible(NULL))
+    }
+  }
+  else{
+    message(paste0("ERROR: Please enter a character string for the strain parameter. Use getAllStrainNames() to see a list of valid strain names."))
     return(invisible(NULL))
   }
-  else if( ! dir.exists(outputdir)){
-    message("ERROR: The specified output directory ", outputdir, " does not exist.")
+
+  outputDir <- file.path(outputDir)
+
+  if( ! is.character(outputDir)){
+    message("ERROR: Please enter a character string for the directory in which to save results of similarity analysis.")
     return(invisible(NULL))
   }
+  else if( ! dir.exists(outputDir)){
+    message("ERROR: The specified output directory ", outputDir, " does not exist.")
+    return(invisible(NULL))
+  }
+
+  # Check numerical parameters
+  if( ! all( c(checkNumeric("minAbsLog2FC", minAbsLog2FC, minValue = 0.0),
+               checkNumeric("pDEGs", pDEGs, minValue = 0.0, maxValue = 1.0),
+               checkNumeric("pCor", pCor, minValue = 0.0, maxValue = 1.0),
+               checkNumeric("quantileCutoff", quantileCutoff, minValue = 0.0, maxValue = 1.0)))){
+
+    return(invisible(NULL))
+  }
+
+  # Check logical parameters
+  if( ! checkLogical("returnTestValues", returnTestValues)) return(invisible(NULL))
+  if( ! checkLogical("showMessages", showMessages)) return(invisible(NULL))
+
 
 
   # Get the query strain's profile (signature)
@@ -52,7 +75,7 @@ getSimilarStrainsByReciprocalCorrelation <- function( strain="",
 
   if(dim(strainSignature)[1] <= 2){
     message(c("\nERROR: ", strain," had ", dim(strainSignature)[1],
-              " differentially-expressed genes based on entered M-value and p-value thresholds, but a minimum of 3 is required for reciprocal correlation analysis."))
+              " differentially-expressed genes based on entered log2 fold-change and p-value thresholds, but a minimum of 3 is required for reciprocal correlation analysis."))
     return(invisible(NULL))
   }
 
@@ -99,7 +122,7 @@ getSimilarStrainsByReciprocalCorrelation <- function( strain="",
   allSigCorrResults <- addQuantileLevel(allSigCorrResults)
 
   pvalcutoff <- quantile(allSigCorrResults$Pvalue.FDR, quantileCutoff, type = 1) # get strains with p-values that were in the desired quantile
-  message("Quantile-based FDR P-value cutoff set to ", pvalcutoff)
+  # message("Quantile-based FDR P-value cutoff set to ", pvalcutoff)
 
   # Sometimes the pvalcutoff can be zero, which will incorrectly return no significant strains. Catch that case here.
   if(pvalcutoff == 0) allSigCorrResults <- allSigCorrResults[allSigCorrResults$Pvalue.FDR == pvalcutoff & allSigCorrResults$Pvalue.FDR < pCor,]
@@ -145,7 +168,7 @@ getSimilarStrainsByReciprocalCorrelation <- function( strain="",
   sigDirectRecipCorrResults <- sigDirectRecipCorrResults[order(sigDirectRecipCorrResults$CorrCoefficient, decreasing=T),] # sort by direct correlation Rval
 
 
-  outputfilename <- paste0(outputdir, "/", strain, "_sigCorr_L2FC", minAbsLog2FC, "_pDEGs", pDEGs, "_pCor", pCor, "_quantile",quantileCutoff,".tsv")
+  outputfilename <- paste0(outputDir, "/", strain, "_sigCorr_L2FC", minAbsLog2FC, "_pDEGs", pDEGs, "_pCor", pCor, "_quantile",quantileCutoff,".tsv")
 
   resultsToOutput <- sigDirectRecipCorrResults[sigDirectRecipCorrResults$Deletion != strain,
                                                c("Deletion", "CorrCoefficient", "Pvalue", "Pvalue.FDR", "Pvalue.FDR.quantile")]

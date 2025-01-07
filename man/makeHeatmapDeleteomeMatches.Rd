@@ -10,7 +10,7 @@ makeHeatmapDeleteomeMatches(
   otherStrains = NA,
   filePrefix = NA,
   titleDesc = "",
-  MthreshForTitle = NA,
+  minAbsLog2FCforTitle = NA,
   pDEGsForTitle = NA,
   pMatchesForTitle = NA,
   quantileForTitle = NA,
@@ -26,9 +26,9 @@ makeHeatmapDeleteomeMatches(
 )
 }
 \arguments{
-\item{strain}{A Deleteome strain whose expression signature will be shown. Used for plot titles and file names.}
+\item{strain}{A Deleteome strain whose expression signature will be shown. Only used for plot titles and file names.}
 
-\item{strainSignature}{The signature of the deletion strain}
+\item{strainSignature}{The transcriptional signature of the deletion strain}
 
 \item{otherStrains}{List of additional Deleteome strains to include in heatmap}
 
@@ -36,7 +36,7 @@ makeHeatmapDeleteomeMatches(
 
 \item{titleDesc}{Rationale for inclusion of additional strains in heatmap. Used in title of heatmap.}
 
-\item{MthreshForTitle}{Log2 fold-change threshold used to get the mutant strain's signature. Only used in heatmap title and file name.}
+\item{minAbsLog2FCforTitle}{Absolute log2 fold-change threshold used to get the mutant strain's signature. Only used in heatmap title and file name.}
 
 \item{pDEGsForTitle}{P-value threhshold used to get the mutant strain's signature (if applicable). Only used in heatmap title and file name.}
 

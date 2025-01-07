@@ -9,12 +9,20 @@
 #' @export
 #'
 #' @examples
-#' # getProfileForDeletion(strain = "nup170", minAbsLog2FC = 0, pDEGs = 0.05)
+#' # getStrainSignature(strain = "nup170", minAbsLog2FC = 0, pDEGs = 0.05)
 #'
 getStrainSignature <- function(strain = "",
                                minAbsLog2FC = 0,
                                pDEGs = 0.05,
                                consoleMessages=T){
+
+  if( ! is.character(strain)){
+    message("ERROR: Please enter a character string for the strain parameter")
+    return(invisible(NULL))
+  }
+
+  if( ! checkNumeric("minAbsLog2FC", minAbsLog2FC, minValue = 0) | ! checkNumeric("pDEGs", pDEGs, minValue = 0, maxValue = 1.0)) return(invisible(NULL))
+  if( ! checkLogical("consoleMessages", consoleMessages)) return(invisible(NULL))
 
   if(consoleMessages){
     message(paste0("Getting log2 fold-change values for ", strain, " from deleteome..."))

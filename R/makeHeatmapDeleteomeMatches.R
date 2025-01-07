@@ -1,11 +1,11 @@
 #' Make a heatmap showing expression data for a query strain's signature compared to other Deleteome strains
 #'
-#' @param strain A Deleteome strain whose expression signature will be shown. Used for plot titles and file names.
-#' @param strainSignature The signature of the deletion strain
+#' @param strain A Deleteome strain whose expression signature will be shown. Only used for plot titles and file names.
+#' @param strainSignature The transcriptional signature of the deletion strain
 #' @param otherStrains List of additional Deleteome strains to include in heatmap
 #' @param filePrefix String that can be added to beginning of heatmap file name. Appears after strain name.
 #' @param titleDesc Rationale for inclusion of additional strains in heatmap. Used in title of heatmap.
-#' @param MthreshForTitle Log2 fold-change threshold used to get the mutant strain's signature. Only used in heatmap title and file name.
+#' @param minAbsLog2FCforTitle Absolute log2 fold-change threshold used to get the mutant strain's signature. Only used in heatmap title and file name.
 #' @param pDEGsForTitle P-value threhshold used to get the mutant strain's signature (if applicable). Only used in heatmap title and file name.
 #' @param pMatchesForTitle P-value threshold used to select similar mutant strains (if applicable)
 #' @param quantileForTitle Quantile threshold used to select similar strains (if applicable). Only used in heatmap title and file name.
@@ -29,7 +29,7 @@ makeHeatmapDeleteomeMatches <- function(strain=NA,
                                         otherStrains=NA,
                                         filePrefix=NA,
                                         titleDesc="",
-                                        MthreshForTitle=NA,
+                                        minAbsLog2FCforTitle=NA,
                                         pDEGsForTitle=NA,
                                         pMatchesForTitle=NA,
                                         quantileForTitle=NA,
@@ -44,14 +44,27 @@ makeHeatmapDeleteomeMatches <- function(strain=NA,
                                         printToFile=T){
 
   # Make heatmap comparing all significantly matched mutants to mutant of interest
-  insuffcondserr <- paste0("\nERROR: Cannot make heatmap because the number of Deleteome strains to show alongside the ", strain, " deletion is 0. At least 1 is required.")
+  if( ! is.data.frame(strainSignature)){
+    message("ERROR: Entry for parameter strainSignature must be a data frame. Use getStrainSignature() to create a valid data frame.")
+  }
 
-  if(length(otherStrains)==0){
-    message(insuffcondserr)
+  if( ! is.character(otherStrains) | length(otherStrains)==0){
+    message("\nERROR: Cannot make heatmap because the number of Deleteome strains to show alongside the ", strain, " deletion is 0. At least 1 is required.")
     return(invisible(NULL))
   }
-  if( all(is.na(otherStrains) )) {
-    message(insuffcondserr)
+
+  # Check logical parameters
+  if( ! all( c(checkLogical("subteloGenesOnly", subteloGenesOnly),
+               checkLogical("clusterColumns", clusterColumns),
+               checkLogical("showRowLabels", showRowLabels),
+               checkLogical("printToFile", printToFile)))){
+    return(invisible(NULL))
+  }
+
+  if( ! all( c(checkNumeric("colFontSize", colFontSize, minValue = 0),
+               checkNumeric("rowFontSize", rowFontSize, minValue = 0),
+               checkNumeric("imageWidth", imageWidth, minValue = 1),
+               checkNumeric("imageHeight", imageHeight, minValue = 1)))){
     return(invisible(NULL))
   }
 
@@ -64,6 +77,7 @@ makeHeatmapDeleteomeMatches <- function(strain=NA,
     message("ERROR: The specified output directory ", outputDir, " does not exist.")
     return(invisible(NULL))
   }
+
 
   require(gplots)
 
@@ -104,7 +118,7 @@ makeHeatmapDeleteomeMatches <- function(strain=NA,
   mybreaks <- seq(-1.5, 1.5, length.out=101)
 
   if(printToFile){
-    hmfile <- paste0(outputDir, "/",strain,"_",filePrefix,"_Heatmap_l2FC",MthreshForTitle,"_pDEGs",
+    hmfile <- paste0(outputDir, "/",strain,"_",filePrefix,"_Heatmap_l2FC",minAbsLog2FCforTitle,"_pDEGs",
                      pDEGsForTitle, "_pMatches",pMatchesForTitle,"_quantile",quantileForTitle,".png")
     png(file = hmfile, width=imageWidth, height = imageHeight, res=300, units="px")
   }
@@ -150,7 +164,7 @@ makeHeatmapDeleteomeMatches <- function(strain=NA,
                      keysize = 1,
                      key.xlab = "Log2 fold-change vs. WT",
                      main = bquote(atop("Expression for "*italic(.(strain)*Delta)*" and other strains included by "*.(titleDesc),
-                                        Cutoffs*": Abs. "*log[2]~fold*"-"*change*">="*.(MthreshForTitle)*", "*DEG~italic("P-")*value*"="*.(pDEGsForTitle)*", "*Similarity~italic("P-")*value*"="*.(pMatchesForTitle)*", "*Quantile*"="*.(quantileForTitle)))
+                                        Cutoffs*": Abs. "*log[2]~fold*"-"*change*">="*.(minAbsLog2FCforTitle)*", "*DEG~italic("P-")*value*"="*.(pDEGsForTitle)*", "*Similarity~italic("P-")*value*"="*.(pMatchesForTitle)*", "*Quantile*"="*.(quantileForTitle)))
   )
 
   if(printToFile){

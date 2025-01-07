@@ -6,7 +6,7 @@
 \usage{
 getSimilarStrainsByEnrichment(
   strain = NA,
-  outputdir = NA,
+  outputDir = NA,
   minAbsLog2FC = 0,
   pDEGs = 0.05,
   pEnrich = 0.05,
@@ -18,7 +18,7 @@ getSimilarStrainsByEnrichment(
 \arguments{
 \item{strain}{Name of Deleteome strain to analyze (query strain/query gene)}
 
-\item{outputdir}{Directory in which to save similarity analysis results}
+\item{outputDir}{Directory in which to save similarity analysis results}
 
 \item{minAbsLog2FC}{Log2 fold-change cutoff used to classify genes as differentially-expressed (the absolute value of log2 fold-change must be higher than minAbsLog2FC)}
 
@@ -37,7 +37,7 @@ Find deletion strains with similar expression profiles to a query strain using h
 }
 \examples{
 # getSimilarStrainsByEnrichment(strain = "nup170",
-#                               outputdir = "...output directory path...",
+#                               outputDir = "...output directory path...",
 #                               minAbsLog2FC = 0,
 #                               pDEGs = 0.05,
 #                               pEnrich = 0.05,

@@ -4,7 +4,7 @@
 #' @param genePositions Table of genes and genomic positions (obtained using getGenePositions())
 #' @param relativeTo Valid options are "telomere" or "centromere". If "telomere" specified, distance to closest telomere (right or left) is plotted.
 #' @param rangeInKB Window (in kilobases) for defining a gene as either in the telomeric or centromeric region
-#' @param Mthresh Log2 fold-change threshold for defining differentially-expressed genes
+#' @param minAbsLog2FC Absolute log2 fold-change threshold for defining differentially-expressed genes
 #' @param pDEGs P-value threshold for defining differentially-expressed genes
 #' @param xMax X-axis maximum (in kilobases). If NA, uses maximum distance to closest telomere or to the centromere among all genes.
 #' @param yMax Y-axis maximum
@@ -17,31 +17,53 @@
 #' @export
 #'
 # Mountain lake plots
-makeGenomicPositionHistogram <- function(strain=NULL,
-                                         genePositions=NULL,
-                                         relativeTo="telomere",
-                                         rangeInKB=25,
-                                         Mthresh=0,
-                                         pDEGs=0.05,
-                                         xMax=NA,
-                                         yMax=50,
-                                         upColor="#d53e4f",
-                                         downColor="#3288bd",
-                                         showUpDownLabels=T,
-                                         outputDir=NA,
-                                         printToFile=T
+makeGenomicPositionHistogram <- function(strain = NULL,
+                                         genePositions = NULL,
+                                         relativeTo = "telomere",
+                                         rangeInKB = 25,
+                                         minAbsLog2FC = 0,
+                                         pDEGs = 0.05,
+                                         xMax = NA,
+                                         yMax = 50,
+                                         upColor = "#d53e4f",
+                                         downColor = "#3288bd",
+                                         showUpDownLabels = T,
+                                         outputDir = NA,
+                                         printToFile = T
 ){
 
-  if(is.null(strain)) message("Cannot produce genomic position histogram: mutant strain ID is invalid.")
+  if( ! is.character(strain)){
+    message("Cannot produce genomic position histogram: mutant strain ID is invalid.")
+    return(invisible(NULL))
+  }
 
   if( ! relativeTo %in% c("telomere", "centromere")){
     message("\nERROR: please use either \"telomere\" or \"centromere\" for the \"relativeTo\" parameter. ", relativeTo, " is not valid." )
     return(invisible(NULL))
   }
 
-  if( ! is.numeric(rangeInKB)){
-    message("\nERROR: Input value for rangeInKB parameter must be numeric.")
-    return()
+  # Check numerical parameters (don't check xMax b/c if is not set, we use genePositions data to set it)
+  if( ! all( c(checkNumeric("rangeInKB", rangeInKB, minValue = 0),
+               checkNumeric("minAbsLog2FC", minAbsLog2FC, minValue = 0.0),
+               checkNumeric("pDEGs", pDEGs, minValue = 0.0, maxValue = 1.0),
+               checkNumeric("yMax", yMax, minValue = 0)))){
+
+    return(invisible(NULL))
+  }
+
+  if( ! is.character(upColor)){
+    message("Pleaes enter a valid character string for the upColor parameter (e.g. \"#d53e4f\")")
+    return(invisible(NULL))
+  }
+
+  if( ! is.character(downColor)){
+    message("Pleaes enter a valid character string for the downColor parameter (e.g. \"#3288bd\")")
+    return(invisible(NULL))
+  }
+
+  if( ! all( c(checkLogical("showUpDownLabels", showUpDownLabels),
+               checkLogical("printToFile", printToFile)))){
+    return(invisible(NULL))
   }
 
   outputDir <- file.path(outputDir)
@@ -70,10 +92,10 @@ makeGenomicPositionHistogram <- function(strain=NULL,
   # Use the following to show VdVFig3 plots of selected strains
   allDF <- genePositions[,relativeToCol]/1000 # get all distance from telomere numbers; filter out mitochondrial genes? If so: genePositions$Chr != 'Mito'
 
-  strainSignature <- getStrainSignature(strain, Mthresh, pDEGs, consoleMessages = F)
+  strainSignature <- getStrainSignature(strain, minAbsLog2FC, pDEGs, consoleMessages = F)
 
-  signatureUP <- strainSignature[strainSignature[,3] > Mthresh, ]
-  signatureDOWN <- strainSignature[strainSignature[,3] <= -Mthresh, ]
+  signatureUP <- strainSignature[strainSignature[,3] > minAbsLog2FC, ]
+  signatureDOWN <- strainSignature[strainSignature[,3] <= -minAbsLog2FC, ]
   signatureALL <- getStrainSignature(strain, 0, 1.0, consoleMessages = F)
 
   upDF <- genePositions[genePositions$Geneid %in% signatureUP$systematicName, relativeToCol]
@@ -136,7 +158,7 @@ makeGenomicPositionHistogram <- function(strain=NULL,
 
   if(! printToFile) dev.new(width=9,height=5.5, noRStudioGD = T)
   else{
-    mlfile <- paste0(outputDir, "/",strain,"_MountainLake_l2FC", Mthresh,"_pDEGs", pDEGs, "_", relativeTo, "_range", rangeInKB, "KB.png")
+    mlfile <- paste0(outputDir, "/",strain,"_MountainLake_l2FC", minAbsLog2FC,"_pDEGs", pDEGs, "_", relativeTo, "_range", rangeInKB, "KB.png")
     png(filename = mlfile,width=9, height=5.5, res=300, units="in")
   }
 
@@ -154,7 +176,7 @@ makeGenomicPositionHistogram <- function(strain=NULL,
 #' @param genePositions Table of genes and genomic positions (obtained using getGenePositions())
 #' @param relativeTo Valid options are "telomere" or "centromere". If "telomere" specified, distance to closest telomere (right or left) is plotted.
 #' @param rangeInKB Window (in kilobases) for defining a gene as either in the telomeric or centromeric region
-#' @param Mthresh Log2 fold-change threshold for defining differentially-expressed genes
+#' @param minAbsLog2FC Log2 fold-change threshold for defining differentially-expressed genes
 #' @param pDEGs P-value threshold for defining differentially-expressed genes
 #' @param xMax X-axis maximum (in kilobases). If NA, uses maximum distance to closest telomere or to the centromere among all genes.
 #' @param yMax Y-axis maximum

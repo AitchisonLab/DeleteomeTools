@@ -2,7 +2,7 @@
 #' Find deletion strains with similar expression profiles to a query strain using hypergeometric enrichment tests on signature genes
 #'
 #' @param strain Name of Deleteome strain to analyze (query strain/query gene)
-#' @param outputdir Directory in which to save similarity analysis results
+#' @param outputDir Directory in which to save similarity analysis results
 #' @param minAbsLog2FC Log2 fold-change cutoff used to classify genes as differentially-expressed (the absolute value of log2 fold-change must be higher than minAbsLog2FC)
 #' @param pDEGs P-value cutoff used to identify differentially-expressed genes
 #' @param pEnrich P-value cutoff used to identify statistically significant enrichment tests
@@ -14,39 +14,59 @@
 #'
 #' @examples
 #' # getSimilarStrainsByEnrichment(strain = "nup170",
-#' #                               outputdir = "...output directory path...",
+#' #                               outputDir = "...output directory path...",
 #' #                               minAbsLog2FC = 0,
 #' #                               pDEGs = 0.05,
 #' #                               pEnrich = 0.05,
 #' #                               quantileCutoff = 0.1)
 
-getSimilarStrainsByEnrichment <- function(strain=NA,
-                                          outputdir = NA,
-                                          minAbsLog2FC=0,
-                                          pDEGs=0.05,
-                                          pEnrich=0.05,
-                                          quantileCutoff=0.05,
-                                          returnTestValues=F,
+getSimilarStrainsByEnrichment <- function(strain = NA,
+                                          outputDir = NA,
+                                          minAbsLog2FC = 0,
+                                          pDEGs = 0.05,
+                                          pEnrich = 0.05,
+                                          quantileCutoff = 0.05,
+                                          returnTestValues = F,
                                           showMessages = F){
 
-  message("Getting deleteome matches based on enrichment tests...")
+  message("\n\nFinding Deleteome strains transcriptionally similar to ", strain, " deletion strain by enrichment...")
 
   conds <- getAllStrainNames()
 
-  if( ! strain %in% conds){
-    stop(paste0(strain, " is not a strain in the Deleteome"))
+  if( is.character(strain)){
+    if( ! strain %in% conds){
+      message(paste0("Could not identify similar strains: ", strain, " is not a strain in the Deleteome"))
+      return(invisible(NULL))
+    }
   }
-
-  outputdir <- file.path(outputdir)
-
-  if(is.na(outputdir)){
-    message("ERROR: Please specify the directory in which to save results of similarity analysis")
+  else{
+    message(paste0("ERROR: Please enter a character string for the strain parameter. Use getAllStrainNames() to see a list of valid strain names."))
     return(invisible(NULL))
   }
-  else if( ! dir.exists(outputdir)){
-    message("ERROR: The specified output directory ", outputdir, " does not exist.")
+
+  outputDir <- file.path(outputDir)
+
+  if( ! is.character(outputDir)){
+    message("ERROR: Please enter a character string for the directory in which to save results of similarity analysis.")
     return(invisible(NULL))
   }
+  else if( ! dir.exists(outputDir)){
+    message("ERROR: The specified output directory ", outputDir, " does not exist.")
+    return(invisible(NULL))
+  }
+
+  # Check numerical parameters
+  if( ! all( c(checkNumeric("minAbsLog2FC", minAbsLog2FC, minValue = 0.0),
+               checkNumeric("pDEGs", pDEGs, minValue = 0.0, maxValue = 1.0),
+               checkNumeric("pEnrich", pEnrich, minValue = 0.0, maxValue = 1.0),
+               checkNumeric("quantileCutoff", quantileCutoff, minValue = 0.0, maxValue = 1.0)))){
+
+    return(invisible(NULL))
+  }
+
+  # Check logical parameters
+  if( ! checkLogical("returnTestValues", returnTestValues)) return(invisible(NULL))
+  if( ! checkLogical("showMessages", showMessages)) return(invisible(NULL))
 
 
   hypergs <- data.frame(Condition=as.character(),HyperGpval=as.numeric(), Pvalue.FDR=as.numeric(),
@@ -108,7 +128,7 @@ getSimilarStrainsByEnrichment <- function(strain=NA,
   }
 
   sigresults <- sighypergs[order(sighypergs$Pvalue.FDR, decreasing=F), c("Condition", "HyperGpval", "Pvalue.FDR", "Pvalue.FDR.quantile")]
-  sigresultsfile <- paste0(outputdir, "/", strain, "_sigHyperG_L2FC",minAbsLog2FC,"_pDEGs",pDEGs,"_pEnrich",pEnrich,"_quantile",quantileCutoff,".tsv")
+  sigresultsfile <- paste0(outputDir, "/", strain, "_sigHyperG_L2FC",minAbsLog2FC,"_pDEGs",pDEGs,"_pEnrich",pEnrich,"_quantile",quantileCutoff,".tsv")
   write.table(sigresults, file = sigresultsfile, sep="\t", quote=F, row.names = F, col.names = T)
   message("Results written to ", sigresultsfile)
 

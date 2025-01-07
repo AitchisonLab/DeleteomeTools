@@ -6,14 +6,14 @@
 \usage{
 GOenrichmentOnStrains(
   strains = c(),
-  padjthresh = 0.1,
+  padjThresh = 0.1,
   useDeleteomeBackground = T
 )
 }
 \arguments{
 \item{strains}{A character vector of Deleteome strain names}
 
-\item{padjthresh}{FDR-adjusted P-value cutoff for GO enrichment significance}
+\item{padjThresh}{FDR-adjusted P-value cutoff for GO enrichment significance}
 
 \item{useDeleteomeBackground}{gene names, not systematic names}
 }
@@ -21,6 +21,6 @@ GOenrichmentOnStrains(
 Perform GO enrichment on a list of Deleteome strain names. By default, uses the list of strains in the Deleteome as the background for the enrichment tests. Performs enrichment test over GO:BP, GO:MF and GO:CC sub-ontologies.
 }
 \examples{
-# GOenrichmentOnStrains(strains = c("ctf18", "ctf8", "dcc1"), padjthresh = 0.1)
+# GOenrichmentOnStrains(strains = c("ctf18", "ctf8", "dcc1"), padjThresh = 0.1)
 
 }

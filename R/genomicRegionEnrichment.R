@@ -15,22 +15,22 @@ genomicRegionEnrichment <- function(genePositions=NULL,
                                     relativeTo="telomere",
                                     rangeInKB=25){
 
-  if(is.null(genePositions)){
+  if( ! checkLogical("includeMito", includeMito)) return(invisible(NULL))
+
+  if( ! is.data.frame(genePositions) | is.null(dim(genePositions)[1])){
+    message("Using default gene position data included in package.")
     genePositions <- getGenePositions(includeMito=includeMito)
   }
 
-  if(length(systematicNamesBG)==0){
-    message("\nERROR: Genomic region enrichment test not performed because vector of background genes was empty")
-    return()
+  if( ! is.character(systematicNamesBG)){
+    message("\nERROR: Genomic region enrichment test not performed because input background gene set was not a character vector.")
+    return(invisible(NULL))
   }
 
-  if(length(systematicNames)==0){
-    message("\nERROR: Genomic region enrichment test not performed because vector of input genes was empty")
-    return()
+  if( ! is.character(systematicNames)){
+    message("\nERROR: Genomic region enrichment test not performed because input gene set to test was not a character vector.")
+    return(invisible(NULL))
   }
-
-  # Limit the background set of genes to only those in systematicNamesBG
-  genePositions <- genePositions[which(genePositions$Geneid %in% systematicNamesBG),]
 
   dfname = "dist_from_telo"
   dfkbname = "dist_from_telo_in_kb"
@@ -40,13 +40,13 @@ genomicRegionEnrichment <- function(genePositions=NULL,
     dfkbname = "dist_from_cent_in_kb"
   }else if(relativeTo != "telomere"){
     message("\nERROR: Invalid value for relativeTo parameter. Please use either \"telomere\" or \"centromere\".")
-    return()
+    return(invisible(NULL))
   }
 
-  if( ! is.numeric(rangeInKB)){
-    message("\nERROR: Input value for rangeInKB parameter must be numeric.")
-    return()
-  }
+  if( ! checkNumeric("rangeInKB", rangeInKB, 0)) return(invisible(NULL))
+
+  # Limit the background set of genes to only those in systematicNamesBG
+  genePositions <- genePositions[which(genePositions$Geneid %in% systematicNamesBG),]
 
   res <- data.frame(systematicName=as.character(systematicNames), x=as.numeric(NA),stringsAsFactors=F)
   names(res)[2] <- dfkbname
