@@ -53,7 +53,7 @@ A table showing the ranked list of similar deletion strains is saved to the fold
 
 To perform the same analysis using the hypergeometric-based alternative mentioned above, use
 ```
-sim <- getSimilarStrainsByEnrichment(strain = "nup170, outputDir = "[enter directory to save output]")
+sim <- getSimilarStrainsByEnrichment(strain = "nup170, outputDir = "[enter output folder path]")
 ```
 These similarity analysis functions include adjustable parameters that set statistical cutoffs for identifying the query strain's set of differentially-expressed genes (DEGs) as well as its similar strains. The default values are based on a systematic analysis of DeleteomeTools' performance for predicting gene function. They are set to optimize the trade-off between functional prediction sensitivity and total number of functional predictions. Users can adjust these parameters to make statisitcal cutoffs more stringent or permissive.
 
@@ -65,7 +65,7 @@ To iteratively perform similarity analyses over multiple query genes and store r
 ```
 results <- list()
 for(mystrain in c("nup170", "pex5")){
-  sim <- getSimilarStrainsByReciprocalCorrelation(mystrain, outputDir = "/Users/maxneal/SCRI/NUP170/deleteomeManuscript/")
+  sim <- getSimilarStrainsByReciprocalCorrelation(mystrain, outputDir = "[enter output folder path]")
   results[[mystrain]] <- sim
 }
 ```
