@@ -29,6 +29,7 @@ install.packages("remotes")
 ```
 Then, install DeleteomeTools via this GitHub site
 ```
+library(devtools)  # or library(remotes)
 install_github("AitchisonLab/DeleteomeTools")
 ```
 Users can overwrite a previous installation using
@@ -50,13 +51,26 @@ sim <- getSimilarStrainsByReciprocalCorrelation(strain = "nup170, outputDir = "[
 The _sim_ variable will contain the names of deletion strains found to be transcriptionally similar to the _nup170_ deletion strain. 
 A table showing the ranked list of similar deletion strains is saved to the folder specified in the _outputDir_ parameter.
 
-To perform the same analysis using the hypergeometric-based alternative, use
+To perform the same analysis using the hypergeometric-based alternative mentioned above, use
 ```
 sim <- getSimilarStrainsByEnrichment(strain = "nup170, outputDir = "[enter directory to save output]")
 ```
+These similarity analysis functions include adjustable parameters that set statistical cutoffs for identifying the query strain's set of differentially-expressed genes (DEGs) as well as its similar strains. The default values are based on a systematic analysis of DeleteomeTools' performance for predicting gene function. They are set to optimize the trade-off between functional prediction sensitivity and total number of functional predictions. Users can adjust these parameters to make statisitcal cutoffs more stringent or permissive.
 
-GET FULL LIST OF STRAIN NAMES
-FOR LOOP
+To see the full list of strain names that can be used as query strains/genes, use
+```
+getAllStrainNames()
+```
+To iteratively perform similarity analyses over multiple query genes and store results in a list, you can use
+```
+results <- list()
+for(mystrain in c("nup170", "pex5")){
+  sim <- getSimilarStrainsByReciprocalCorrelation(mystrain, outputDir = "/Users/maxneal/SCRI/NUP170/deleteomeManuscript/")
+  results[[mystrain]] <- sim
+}
+```
+### Predicting gene function
+After identifying the set of deletion strains that are similar 
 GO enrichment
 
 
