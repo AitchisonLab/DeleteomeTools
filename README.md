@@ -14,15 +14,53 @@ This work is described in
 
 For any single-gene deletion profiled in the Deleteome, our software can be used to identify other single-gene deletion strains that are transcriptomically similar. It offers two methods for assessing similarity between transcriptomic profiles. The first quantifies similarity by conducting correlation tests on log2 fold-change values of transcriptomic profiles. The second method employs hypergeometric tests to determine whether the set of significantly altered genes shared among transcriptomic profiles occurs more frequently than expected by chance. 
 
-The first approach considers the magnitude of expression changes in differentially-expressed genes, while the second approach focuses on whether a gene is differentially expressed or not, based on user-defined thresholds. 
+The first approach considers the magnitude of expression changes in differentially-expressed genes, while the second approach focuses on whether or not a gene is differentially expressed and the direction of its expression change. 
 
 In our studies with NUP170, we have observed that the two approaches yield similar, complementary results. The correlation-based method tends to be the more conservative option.
 
-## Getting started in RStudio
+## Installation
+Make sure the _devtools_ or _remotes_ package is installed in your R environment. To install, use
+```
+install.packages("devtools")
+```
+or
+```
+install.packages("remotes")
+```
+Then, install DeleteomeTools via this GitHub site
+```
+install_github("AitchisonLab/DeleteomeTools")
+```
+Users can overwrite a previous installation using
+```
+install_github("AitchisonLab/DeleteomeTools", force = T)
+```
+## Example usage
+Load the DeleteomeTools package
+```
+library(DeleteomeTools)
+```
+### Identifying transcriptionally similar deletion strains
+DeleteomeTools was primarily developed to identify deletion strains in the Deleteome that are transcriptionally similar to a strain where a gene of interest was deleted. We refer to the gene of interest as the "query gene" and its associated deletion strain as the "query strain". 
 
-* Clone this repository to your location of choice.
-* Open the _get_similar_mutants_by_correlation.R_ script in R/RStudio and run it (e.g. by using "Source" in RStudio). This will identify deletion strains in the Deleteome that are similar to an input list of "query" deletion strains using the correlation-based methodology described above. (Run _get_similar_mutants_by_enrichment.R_ to perform the same analysis using the hypergeometric-based alternative.)
-* A table showing the ranked list of similar deletion strains is saved to the "output/mutant_similarity" folder within the repository.
+Users can identify deletion strains similar to the _nup170_ deletion strain using
+```
+sim <- getSimilarStrainsByReciprocalCorrelation(strain = "nup170, outputDir = "[enter directory to save output]")
+```
+The _sim_ variable will contain the names of deletion strains found to be transcriptionally similar to the _nup170_ deletion strain. 
+A table showing the ranked list of similar deletion strains is saved to the folder specified in the _outputDir_ parameter.
+
+To perform the same analysis using the hypergeometric-based alternative, use
+```
+sim <- getSimilarStrainsByEnrichment(strain = "nup170, outputDir = "[enter directory to save output]")
+```
+
+GET FULL LIST OF STRAIN NAMES
+FOR LOOP
+GO enrichment
+
+
+
 * The example script will also generate heatmaps showing gene expression values across the similar Deleteome strains it identifies. These are saved in the "output/heatmaps" folder. 
 * A plot showing numbers of significantly up- and down-regulated genes according to their distance from telomeres will also be shown. We have used these "mountain lake" plots to identify and illustrate subtelomeric silencing defects in the NUP170 deletion strain as well as other Deleteome strains.
 * The script will also perform a Gene Ontology (GO) enrichment analysis on the collected set of genes deleted among the similar deletion strains it finds. For example, the _get_similar_mutants_by_correlation.R_ script identifies 39 strains similar to the NUP170 deletion strain. The GO analysis is performed on the collected set of 39 genes deleted among those strains. The list of all genes deleted across the Deleteome is used as the background for these enrichment tests. GO analysis results are saved in the "output/GO_enrichment" folder.
