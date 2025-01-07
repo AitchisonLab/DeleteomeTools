@@ -41,10 +41,10 @@ Load the DeleteomeTools package
 ```
 library(DeleteomeTools)
 ```
-### Identifying transcriptionally similar deletion strains
-DeleteomeTools was primarily developed to identify deletion strains in the Deleteome that are transcriptionally similar to a strain where a gene of interest was deleted. We refer to the gene of interest as the "query gene" and its associated deletion strain as the "query strain". 
+### Identifying similar deletion strains
+DeleteomeTools was primarily developed to identify deletion strains in the Deleteome whose gene expression changes vs. wild-type are similar to a strain where a gene of interest was deleted. We refer to the gene of interest as the "query gene" and its associated deletion strain as the "query strain". 
 
-Users can identify deletion strains similar to the _nup170_ deletion strain using
+For example, users can identify deletion strains similar to the _nup170_ deletion strain using
 ```
 sim <- getSimilarStrainsByReciprocalCorrelation(strain = "nup170, outputDir = "[enter directory to save output]")
 ```
@@ -55,7 +55,7 @@ To perform the same analysis using the hypergeometric-based alternative mentione
 ```
 sim <- getSimilarStrainsByEnrichment(strain = "nup170, outputDir = "[enter output folder path]")
 ```
-These similarity analysis functions include adjustable parameters that set statistical cutoffs for identifying the query strain's set of differentially-expressed genes (DEGs) as well as its similar strains. The default values are based on a systematic analysis of DeleteomeTools' performance for predicting gene function. They are set to optimize the trade-off between functional prediction sensitivity and total number of functional predictions. Users can adjust these parameters to make statisitcal cutoffs more stringent or permissive.
+These similarity analysis functions also include adjustable parameters that set statistical cutoffs for identifying the query strain's set of differentially-expressed genes (DEGs) as well as its similar strains. The default values are based on a systematic analysis of DeleteomeTools' performance for predicting gene function. They are set to optimize the trade-off between functional prediction sensitivity and total number of functional predictions. Users can adjust these parameters to make statisitcal cutoffs more stringent or permissive as desired.
 
 To see the full list of strain names that can be used as query strains/genes, use
 ```
@@ -69,87 +69,77 @@ for(mystrain in c("nup170", "pex5")){
   results[[mystrain]] <- sim
 }
 ```
-### Predicting gene function
-After identifying the set of deletion strains that are similar to a query strain, users can functionally profile the set of genes deleted in those similar strains using GO enrichment analysis. GO biological processes, cellular components, and molecular functions significantly enriched in this analysis indicate the query strain may be associated with those processes, components or functions. By default, the list of all genes deleted across Deleteome strains is used as the background for the enrichment analysis.
+### Gene function prediction
+After identifying the set of deletion strains that are similar to a query strain, users can functionally profile the set of genes deleted in those similar strains using GO enrichment analysis. 
+The GO biological processes, cellular components, and molecular functions significantly enriched in this analysis indicate the query strain may be associated with those processes, components and functions. By default, the list of all genes deleted across Deleteome strains is used as the background for the enrichment analysis.
 
 Perform GO enrichment on the genes deleted in strains found to be similar to a query strain using
 ```
 gores <- GOenrichmentOnStrains(sim)
 print(gores)
 ```
+The GOenrichmentOnStrains() function also includes an adjustable parameter _padjThresh_ that sets the signficance cutoff for enriched GO terms.
+
 ## Visualization features
 
 ### Gene expression heatmaps
 It may be useful for users to visualize gene expression values for a query strain alongside values from other strains such as those found to be transcriptionally similar. DeleteomeTools allows users to generate heatmaps showing such comparisons.
 
-The following code will generate a heatmap of gene expression values for the _nup170_ deletion strain's differentially expressed genes alongside values from strains that are transcriptionally similar. In this example, default values for statistical cutoff parameters (to select the query strain's DEGs and similar strains) are used.
+The following code will generate a heatmap of gene expression values for the _nup170_ deletion strain's differentially expressed genes (DEGs, rows) alongside values from strains that are transcriptionally similar (columns). In this example, default values for statistical cutoff parameters (to select the query strain's DEGs and similar strains) are used.
 ```
 # Specify query strain
 querystrain <- "nup170"
 
-# Set statistical cutoffs (default values for correlation-based similarity analyses are shown)
+# Set statistical cutoffs (default values for correlation-based similarity analyses are used here)
 fccut <- 0       # Absolute log2 fold-change cutoff for identifying differentially-expressed genes in query strain
 pdegcut <- 0.05  # P-value cutoff for identifying differentially-expressed genes in query strain
 psimcut <- 0.05  # P-value cutoff for identifying statistically-significant correlation tests
 qcut <- 0.1      # Quantile cutoff for down-selecting significantly similar strains
 
+# Run similarity analysis using reciprocal correlation
 sim <- getSimilarStrainsByReciprocalCorrelation( strain = querystrain,  # Query gene/strain
                                                  outputDir = "[enter output folder path]",  # Path to folder where analysis results are saved
                                                  minAbsLog2FC = fccut,  # Absolute log2 fold-change cutoff for identifying differentially-expressed genes in query strain
                                                  pDEGs = pdegcut,       # P-value cutoff for identifying differentially-expressed genes in query strain
                                                  pCor = psimcut,        # P-value cutoff for identifying statistically-significant correlation tests
-                                                 quantileCutoff = 0.1   # Quantile cutoff for down-selecting significantly similar strains
+                                                 quantileCutoff = qcut   # Quantile cutoff for down-selecting significantly similar strains
                                                  )
 
 # Get dataframe of expression data for query strain
 querysig <- getStrainSignature(strain = querystrain, minAbsLog2FC = fccut, pDEGs = pdegcut)
 
 # Make heatmap of expression values
-hm1 <- makeHeatmapDeleteomeMatches( strain = querystrain,  # Strain name to display in heatmap title
-                                    strainSignature = querysig,  # Expression values for strain's differentially-expressed genes
-                                    otherStrains = sim,  # THe set of other strains to show in heatmap (character vector)
+hm1 <- makeHeatmapDeleteomeMatches( strain = querystrain,         # Strain name to display in heatmap title
+                                    strainSignature = querysig,   # Expression values for strain's differentially-expressed genes
+                                    otherStrains = sim,           # The set of other strains to show in heatmap (character vector)
                                     filePrefix = "Corr_matches",  # A filename prefix to use when writing heatmap to a file
                                     titleDesc = "transcriptional similarity (reciprocal correlation)",  # Description of comparison method for use in heatmap title
-                                    minAbsLog2FCforTitle = fccut, # Absolute log2 fold-change cutoff used in obtaining mutantProfile. Used in heatmap title.
-                                    pDEGsForTitle = pdegcut,  # P-value cutoff used in obtaining mutantProfile. Used in heatmap title.
-                                    pMatchesForTitle = psimcut,  # If the selectedConditions are included by virtue of similarity analysis, the P-value cutoff used in that analysis. Used for heatmap title.
-                                    quantileForTitle = qcut,  # If the selectedConditions are included by virtue of similarity analysis, the P-value cutoff used in that analysis. Used for heatmap title.
-                                    imageWidth = 5000,  # If writing to file, width of image in pixels
+                                    minAbsLog2FCforTitle = fccut, # Absolute log2 fold-change cutoff used in obtaining mutantProfile. Only used for heatmap title.
+                                    pDEGsForTitle = pdegcut,      # P-value cutoff used in obtaining mutantProfile. Only used for heatmap title.
+                                    pMatchesForTitle = psimcut,   # If the selectedConditions are included by virtue of similarity analysis, the P-value cutoff used in that analysis. Only used for heatmap title.
+                                    quantileForTitle = qcut,      # If the selectedConditions are included by virtue of similarity analysis, the quantile cutoff used in that analysis. Only used for heatmap title.
+                                    imageWidth = 5000,            # If writing to file, width of image in pixels
                                     outputDir="[enter output folder path]",  # If writing to file, folder in which to save image
-                                    printToFile = T  # Whether to write the heatmap to a file or show in a new window
+                                    printToFile = T               # Whether to write the heatmap to a file or show in a new window
                                     )
 ```
-Instead of writing the heatmap to an image file, users also have the option to just show the heatmap in a new window by setting the _pathToFile_ parameter to FALSE.
+Instead of writing the heatmap to an image file, users also have the option to just show the heatmap in a new window by setting the _pathToFile_ parameter to FALSE. Users can also limit the expression values in heatmap rows to subtelomeric genes only by setting the _subteloGenesOnly_ parameter to TRUE.
 
+### Mountain lake plots
+DeleteomeTools was developed in the context of research on the yeast nucleoporin NUP170 which mediates subtelomeric silencing. Therefore, the package also includes a  feature for visualizing subtelomeric silencing defects/enhancements. These "mountain lake" plots consist of histograms indicating the genomic position of a deletion strain's significantly up- and down-regulated genes relative to the closest telomere. Alternatively, their position relative to the centromere can be shown.
 
-
-
-* A plot showing numbers of significantly up- and down-regulated genes according to their distance from telomeres will also be shown. We have used these "mountain lake" plots to identify and illustrate subtelomeric silencing defects in the NUP170 deletion strain as well as other Deleteome strains.
-* The script will also perform a Gene Ontology (GO) enrichment analysis on the collected set of genes deleted among the similar deletion strains it finds. 
-
-
-
-* Make a Mountain Lake plot for the query gene/strain that shows the genomic position of the strain's differentially-expressed genes relative to closest telomere
+Default values for statistical cutoffs and axis limits are used in this example
 ```
-makeGenomicPositionHistogram(  delData = alldata,  # Deleteome expression data object
-                               mutant = "nup170",  # Deletion strain to visualize
-                               Mthresh = 0.0,      # Absolute log2 fold-change cutoff for identifying differentially-expressed genes in deletion strain
-                               pDEGs = 0.05,       # P-value cutoff for identifying differentially-expressed genes in deletion strain
-                               ymax = 40,          # Maximum value for Y-axis
-                               printToFile = T     # Whether to write the heatmap to a file or show in a new window
-                            )
-```
-
-* Perform GO enrichment to functionally profile the genes deleted in strains similar to the query strain, thereby predicting function of query gene
-```
-GOresults <- doGOenrichmentOnDeleteomeMatches( delData = alldata,  # Deleteome expression data object
-                                  genes = similarStrains,          # Set of genes to test for GO enrichment (the genes deleted in each strain found to be similar to the query strain)
-                                  padjthresh = 0.1                 # FDR-adjusted P-value cutoff for significant enrichment. Only enrichment tests meeting this cutoff are returned.
-                                )
+makeMountainLakePlot(strain = "nup170",   # Deletion strain to visualize
+                     minAbsLog2FC = 0,    # Absolute log2 fold-change cutoff for identifying differentially-expressed genes in deletion strain
+                     pDEGs = 0.05,        # P-value cutoff for identifying differentially-expressed genes in deletion strain
+                     yMax = 40,           # Y-axis maximum value
+                     outputDir = "[enter path to output folder]",  # If writing to file, folder to save image
+                     printToFile = T)     # Whether to save image as file or open in new window
 ```
 
 ## Dependencies
-Users will need to have the following R packages installed to run the example scripts:
+Users will need to have the following R packages installed to run the set examples above:
 * [org.Sc.sgd.db](https://bioconductor.org/packages/release/data/annotation/html/org.Sc.sgd.db.html)
 * [gplots](https://www.rdocumentation.org/packages/gplots/versions/3.1.3)
 * [ggplot2](https://ggplot2.tidyverse.org)
