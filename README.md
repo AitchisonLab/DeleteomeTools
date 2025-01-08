@@ -68,7 +68,7 @@ To iteratively perform similarity analyses over multiple query genes and store r
 results <- list()  # List for storing results
 for(astrain in c("nup170", "pex5")){
   sim <- getSimilarStrainsByReciprocalCorrelation(astrain, outputDir = "[enter output folder path]")
-  results[[mystrain]] <- sim
+  results[[astrain]] <- sim
 }
 ```
 ### Gene function prediction
