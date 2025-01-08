@@ -111,19 +111,19 @@ sim <- getSimilarStrainsByReciprocalCorrelation( strain = querystrain,  # Query 
 querysig <- getStrainSignature(strain = querystrain, minAbsLog2FC = fccut, pDEGs = pdegcut)
 
 # Make heatmap of expression values
-hm1 <- makeHeatmapDeleteomeMatches( strain = querystrain,         # Strain name to display in heatmap title
-                                    strainSignature = querysig,   # Expression values for strain's differentially-expressed genes
-                                    otherStrains = sim,           # The set of other strains to show in heatmap (character vector)
-                                    filePrefix = "Corr_matches",  # A filename prefix to use when writing heatmap to a file
-                                    titleDesc = "transcriptional similarity (reciprocal correlation)",  # Description of comparison method for use in heatmap title
-                                    minAbsLog2FCforTitle = fccut, # Absolute log2 fold-change cutoff used in obtaining mutantProfile. Only used for heatmap title.
-                                    pDEGsForTitle = pdegcut,      # P-value cutoff used in obtaining mutantProfile. Only used for heatmap title.
-                                    pMatchesForTitle = psimcut,   # If the selectedConditions are included by virtue of similarity analysis, the P-value cutoff used in that analysis. Only used for heatmap title.
-                                    quantileForTitle = qcut,      # If the selectedConditions are included by virtue of similarity analysis, the quantile cutoff used in that analysis. Only used for heatmap title.
-                                    imageWidth = 5000,            # If writing to file, width of image in pixels
-                                    outputDir="[enter output folder path]",  # If writing to file, folder in which to save image
-                                    printToFile = T               # Whether to write the heatmap to a file or show in a new window
-                                    )
+makeHeatmapDeleteomeMatches( strain = querystrain,         # Strain name to display in heatmap title
+                             strainSignature = querysig,   # Expression values for strain's differentially-expressed genes
+                             otherStrains = sim,           # The set of other strains to show in heatmap (character vector)
+                             filePrefix = "Corr_matches",  # A filename prefix to use when writing heatmap to a file
+                             titleDesc = "transcriptional similarity (reciprocal correlation)",  # Description of comparison method for use in heatmap title
+                             minAbsLog2FCforTitle = fccut, # Absolute log2 fold-change cutoff used in obtaining mutantProfile. Only used for heatmap title.
+                             pDEGsForTitle = pdegcut,      # P-value cutoff used in obtaining mutantProfile. Only used for heatmap title.
+                             pMatchesForTitle = psimcut,   # If the selectedConditions are included by virtue of similarity analysis, the P-value cutoff used in that analysis. Only used for heatmap title.
+                             quantileForTitle = qcut,      # If the selectedConditions are included by virtue of similarity analysis, the quantile cutoff used in that analysis. Only used for heatmap title.
+                             imageWidth = 5000,            # If writing to file, width of image in pixels
+                             outputDir="[enter output folder path]",  # If writing to file, folder in which to save image
+                             printToFile = T               # Whether to write the heatmap to a file or show in a new window
+                             )
 ```
 Instead of writing the heatmap to an image file, users also have the option to just show the heatmap in a new window by setting the _pathToFile_ parameter to FALSE. Users can also limit the expression values in heatmap rows to subtelomeric genes only by setting the _subteloGenesOnly_ parameter to TRUE.
 
