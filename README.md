@@ -143,7 +143,7 @@ hm <- makeHeatmapDeleteomeMatches( strain = querystrain,   # Strain name to disp
 Instead of writing the heatmap to an image file, users also have the option to just show the heatmap in a new window by setting the _pathToFile_ parameter to FALSE. Users can also limit the expression values in heatmap rows to subtelomeric genes only by setting the _subteloGenesOnly_ parameter to TRUE.
 
 ### Mountain lake plots
-DeleteomeTools was developed in the context of research on the yeast nucleoporin NUP170 which mediates subtelomeric silencing. Therefore, the package also includes a  feature for visualizing subtelomeric silencing defects/enhancements. These "mountain lake" plots consist of histograms indicating the genomic position of a deletion strain's significantly up- and down-regulated genes relative to the closest telomere. Alternatively, their position relative to the centromere can be shown.
+DeleteomeTools was developed in the context of research on the yeast nucleoporin NUP170 which mediates subtelomeric gene silencing. Thus, the package also includes a  feature for visualizing subtelomeric silencing defects/enhancements. These "mountain lake" plots consist of histograms indicating the genomic position of a deletion strain's significantly up- and down-regulated genes relative to the closest telomere. Alternatively, their position relative to the centromere can be shown.
 
 Default values for statistical cutoffs and axis limits are used in this example
 ```
@@ -157,7 +157,7 @@ makeMountainLakePlot(strain = "nup170",   # Deletion strain to visualize
 The _makeMountainLakePlot()_ function also performs two hypergeometric enrichment tests to determine 1) if there is an over-representation of significantly up-regulated genes in the subtelomeric region (or, alternatively, the centromeric region), and 2) if there is an over-representation of significantly down-regulated genes in the region. P-values of these tests are output to the console.
 
 ## Dependencies
-DeleteomeTools uses the following R packages
+DeleteomeTools depends the following R packages
 * [clusterProfiler](https://bioconductor.org/packages/release/bioc/html/clusterProfiler.html) (for GO enrichment tests)
 * [gplots](https://www.rdocumentation.org/packages/gplots/versions/3.1.3) (for heatmaps)
 * [ggplot2](https://ggplot2.tidyverse.org) (for mountain lake plots)
@@ -187,4 +187,5 @@ if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 BiocManager::install("org.Sc.sgd.db")
 ```
-
+## Contact
+For all issues, please use the Issues tracker on this site
