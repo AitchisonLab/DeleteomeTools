@@ -102,7 +102,7 @@ BiocManager::install("clusterProfiler")
 ### Gene expression heatmaps
 It may be useful for users to visualize gene expression values for a query strain alongside values from other strains such as those found to be transcriptionally similar. DeleteomeTools allows users to generate customizeable heatmaps showing such comparisons.
 
-The following code will generate a heatmap of gene expression values for the _nup170_ deletion strain's differentially expressed genes (DEGs, rows) alongside values from strains that are transcriptionally similar (columns). In this example, default values for statistical cutoff parameters (to select the query strain's DEGs and similar strains) are used.
+The following code will generate a heatmap of gene expression values for the _nup170_ deletion strain's differentially expressed genes (DEGs, rows) alongside values from strains that are transcriptionally similar (columns). In this example, default values for statistical cutoff parameters are used to select the query strain's DEGs and for similarity analysis.
 ```
 # Specify query strain
 querystrain <- "nup170"
