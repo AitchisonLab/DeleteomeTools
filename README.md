@@ -140,7 +140,9 @@ hm <- makeHeatmapDeleteomeMatches( strain = querystrain,   # Strain name to disp
                              printToFile = T               # Whether to write the heatmap to a file or show in a new window
                              )
 ```
-Instead of writing the heatmap to an image file, users also have the option to just show the heatmap in a new window by setting the _pathToFile_ parameter to FALSE. Users can also limit the expression values in heatmap rows to subtelomeric genes only by setting the _subteloGenesOnly_ parameter to TRUE.
+Note that the set of strains to include in the heatmap can consist of any combination of Deleteome strains, not only those found to be similar to a query strain, as in this example.
+
+Instead of writing the heatmap to an image file, users also have the option to show the heatmap in a new window by setting the _pathToFile_ parameter to FALSE. Users can also limit the expression values in heatmap rows to subtelomeric genes only by setting the _subteloGenesOnly_ parameter to TRUE.
 
 ### Mountain lake plots
 DeleteomeTools was developed in the context of research on the yeast nucleoporin NUP170 which mediates subtelomeric gene silencing. Thus, the package also includes a  feature for visualizing subtelomeric silencing defects/enhancements. These "mountain lake" plots consist of histograms indicating the genomic position of a deletion strain's significantly up- and down-regulated genes relative to the closest telomere. Alternatively, their position relative to the centromere can be shown.
