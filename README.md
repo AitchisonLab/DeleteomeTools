@@ -89,8 +89,10 @@ if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 BiocManager::install("org.Sc.sgd.db")
 ```
-and then
+and
 ```
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
 BiocManager::install("clusterProfiler")
 ```
 
