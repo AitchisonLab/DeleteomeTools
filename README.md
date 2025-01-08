@@ -82,6 +82,18 @@ print(gores)
 ```
 The GOenrichmentOnStrains() function also includes an adjustable parameter _padjThresh_ that sets the signficance cutoff for enriched GO terms.
 
+GO enrichment analysis requires the _org.Sc.sgd.db_ and _clusterProfiler_ packages, which are available through BioConductor. If you get a message indicating either of this are missing, you can install them using
+```
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("org.Sc.sgd.db")
+```
+and then
+```
+BiocManager::install("clusterProfiler")
+```
+
+
 ## Visualization features
 
 ### Gene expression heatmaps
@@ -142,8 +154,34 @@ makeMountainLakePlot(strain = "nup170",   # Deletion strain to visualize
 The _makeMountainLakePlot()_ function also performs two hypergeometric enrichment tests to determine 1) if there is an over-representation of significantly up-regulated genes in the subtelomeric region (or, alternatively, the centromeric region), and 2) if there is an over-representation of significantly down-regulated genes in the region. P-values of these tests are output to the console.
 
 ## Dependencies
-Users will need to have the following R packages installed to run the set examples above:
-* [org.Sc.sgd.db](https://bioconductor.org/packages/release/data/annotation/html/org.Sc.sgd.db.html)
-* [gplots](https://www.rdocumentation.org/packages/gplots/versions/3.1.3)
-* [ggplot2](https://ggplot2.tidyverse.org)
-* [clusterProfiler](https://bioconductor.org/packages/release/bioc/html/clusterProfiler.html)
+DeleteomeTools uses the following R packages
+* [clusterProfiler](https://bioconductor.org/packages/release/bioc/html/clusterProfiler.html) (for GO enrichment tests)
+* [gplots](https://www.rdocumentation.org/packages/gplots/versions/3.1.3) (for heatmaps)
+* [ggplot2](https://ggplot2.tidyverse.org) (for mountain lake plots)
+* [org.Sc.sgd.db](https://bioconductor.org/packages/release/data/annotation/html/org.Sc.sgd.db.html) (for GO enrichment tests)
+
+The _gplots_ and _ggplot2_ packages should automatically install when installing DeleteomeTools, as they are available on CRAN. However, the _org.Sc.sgd.db_ and _clusterProfiler_ packages are only available through BioConductor and are not installed automatically. 
+
+The following code shows how to install each of these packages, if needed
+
+_clusterProfiler_
+```
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("clusterProfiler")
+```
+_gplots_
+```
+install.packages("gplots")
+```
+_ggplot2_
+```
+install.packages("ggplot2")
+```
+_org.Sc.sgd.db_
+```
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("org.Sc.sgd.db")
+```
+
