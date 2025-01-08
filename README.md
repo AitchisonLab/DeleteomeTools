@@ -139,6 +139,7 @@ makeMountainLakePlot(strain = "nup170",   # Deletion strain to visualize
                      outputDir = "[enter path to output folder]",  # If writing to file, folder to save image
                      printToFile = T)     # Whether to save image as file or open in new window
 ```
+The _makeMountainLakePlot()_ function also performs two hypergeometric enrichment tests to determine 1) if there is an over-representation of significantly up-regulated genes in the subtelomeric region (or, alternatively, the centromeric region), and 2) if there is an over-representation of significantly down-regulated genes in the region. P-values of these tests are output to the console.
 
 ## Dependencies
 Users will need to have the following R packages installed to run the set examples above:
