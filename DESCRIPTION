@@ -14,7 +14,5 @@ Depends:
     R (>= 2.10)
 LazyData: true
 Imports: 
-    clusterProfiler,
     ggplot2,
-    gplots,
-    org.Sc.sgd.db
+    gplots
