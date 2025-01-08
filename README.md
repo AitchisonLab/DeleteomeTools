@@ -51,7 +51,7 @@ sim <- getSimilarStrainsByReciprocalCorrelation(strain = "nup170",
                                                 outputDir = "[enter output folder path]")
 ```
 The _sim_ variable will contain the names of deletion strains found to be transcriptionally similar to the _nup170_ deletion strain. 
-A table showing the ranked list of similar deletion strains is saved to the folder specified in the _outputDir_ parameter.
+A table showing the ranked list of similar deletion strains is saved to the folder specified in the ```outputDir``` parameter.
 
 To perform the same analysis using the hypergeometric-based alternative mentioned above, use
 ```
@@ -81,7 +81,7 @@ Perform GO enrichment on the genes deleted in strains found to be similar to a q
 gores <- GOenrichmentOnStrains(sim)
 print(gores)
 ```
-The GOenrichmentOnStrains() function also includes an adjustable parameter _padjThresh_ that sets the signficance cutoff for enriched GO terms.
+The ```GOenrichmentOnStrains()``` function also includes an adjustable parameter ```padjThresh``` that sets the signficance cutoff for enriched GO terms.
 
 GO enrichment analysis requires the _org.Sc.sgd.db_ and _clusterProfiler_ packages, which are available through BioConductor. If you get a message indicating either of this are missing, you can install them using
 ```
@@ -142,7 +142,7 @@ hm <- makeHeatmapDeleteomeMatches( strain = querystrain,   # Strain name to disp
 ```
 Note that the set of strains to include in the heatmap can consist of any combination of Deleteome strains, not only those found to be similar to a query strain, as in this example.
 
-Instead of writing the heatmap to an image file, users also have the option to show the heatmap in a new window by setting the _pathToFile_ parameter to FALSE. Users can also limit the expression values in heatmap rows to subtelomeric genes only by setting the _subteloGenesOnly_ parameter to TRUE.
+Instead of writing the heatmap to an image file, users also have the option to show the heatmap in a new window by setting the ```pathToFile``` parameter to FALSE. Users can also limit the expression values in heatmap rows to subtelomeric genes only by setting the ```subteloGenesOnly``` parameter to TRUE.
 
 ### Mountain lake plots
 DeleteomeTools was developed in the context of research on the yeast nucleoporin NUP170 which mediates subtelomeric gene silencing. Thus, the package also includes a  feature for visualizing subtelomeric silencing defects/enhancements. These "mountain lake" plots consist of histograms indicating the genomic position of a deletion strain's significantly up- and down-regulated genes relative to the closest telomere. Alternatively, their position relative to the centromere can be shown.
@@ -156,7 +156,7 @@ makeMountainLakePlot(strain = "nup170",   # Deletion strain to visualize
                      outputDir = "[enter path to output folder]",  # If writing to file, folder to save image
                      printToFile = T)     # Whether to save image as file or open in new window
 ```
-The _makeMountainLakePlot()_ function also performs two hypergeometric enrichment tests to determine 1) if there is an over-representation of significantly up-regulated genes in the subtelomeric region (or, alternatively, the centromeric region), and 2) if there is an over-representation of significantly down-regulated genes in the region. P-values of these tests are output to the console.
+The ```makeMountainLakePlot()``` function also performs two hypergeometric enrichment tests to determine 1) if there is an over-representation of significantly up-regulated genes in the subtelomeric region (or, alternatively, the centromeric region), and 2) if there is an over-representation of significantly down-regulated genes in the region. P-values of these tests are output to the console.
 
 ## Dependencies
 DeleteomeTools depends the following R packages
