@@ -122,11 +122,11 @@ sim <- getSimilarStrainsByReciprocalCorrelation( strain = querystrain,  # Query 
                                                  quantileCutoff = qcut   # Quantile cutoff for down-selecting significantly similar strains
                                                  )
 
-# Get dataframe of expression data for query strain
+# Get dataframe of expression data for query strain (needed for heatmap)
 querysig <- getStrainSignature(strain = querystrain, minAbsLog2FC = fccut, pDEGs = pdegcut)
 
 # Make heatmap of expression values
-hm <- makeHeatmapDeleteomeMatches( strain = querystrain,         # Strain name to display in heatmap title
+hm <- makeHeatmapDeleteomeMatches( strain = querystrain,   # Strain name to display in heatmap title
                              strainSignature = querysig,   # Expression values for strain's differentially-expressed genes
                              otherStrains = sim,           # The set of other strains to show in heatmap (character vector)
                              filePrefix = "Corr_matches",  # A filename prefix to use when writing heatmap to a file
