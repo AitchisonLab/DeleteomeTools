@@ -76,14 +76,7 @@ for(astrain in c("nup170", "pex5")){
 After identifying the set of deletion strains that are similar to a query strain, users can functionally profile the set of genes deleted in those strains using GO enrichment analysis. 
 The GO biological processes, cellular components, and molecular functions that are significantly enriched in these analysis indicate the query strain may be associated with those processes, components and functions. By default, the list of all genes deleted across Deleteome strains is used as the background for the enrichment analysis.
 
-Perform GO enrichment on the genes deleted in strains found to be similar to a query strain using
-```
-gores <- GOenrichmentOnStrains(sim)
-print(gores)
-```
-The ```GOenrichmentOnStrains()``` function also includes an adjustable parameter ```padjThresh``` that sets the signficance cutoff for enriched GO terms.
-
-GO enrichment analysis requires the _org.Sc.sgd.db_ and _clusterProfiler_ packages, which are available through BioConductor. If you get a message indicating either of this are missing, you can install them using
+GO enrichment analysis requires the _org.Sc.sgd.db_ and _clusterProfiler_ packages, which are available through BioConductor. These packages are not automatically installed when installing DeleteomeTools, so if you recieve a message indicating either of them are missing, you can install them using
 ```
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
@@ -95,6 +88,15 @@ if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 BiocManager::install("clusterProfiler")
 ```
+
+Perform GO enrichment on the genes deleted in strains found to be similar to a query strain using
+```
+gores <- GOenrichmentOnStrains(sim)
+print(gores)
+```
+The ```GOenrichmentOnStrains()``` function also includes an adjustable parameter ```padjThresh``` that sets the signficance cutoff for enriched GO terms.
+
+
 
 
 ## Visualization features
